@@ -21,13 +21,13 @@ class Crawler
     #get = Http.open(@host)
 
     @links = parse html
- 
+
     @abs_links = Array.new
     @ext_links = Array.new
     @rel_links = Array.new
     @mail_links = Array.new
   end
-  
+
   def run(level)
     split_links @links
     @rel_links.delete_if { |link| link == "/" }
@@ -50,7 +50,7 @@ end
         @abs_links << link
       elsif link.include? "http://"
         @ext_links << link
-      elsif link.start_with? "mailto:"  
+      elsif link.start_with? "mailto:"
         @mail_links << link
       elsif not link.include? ":" and not link.start_with? "#"
         @rel_links << link
@@ -65,7 +65,7 @@ end
     end
     return false
   end
-  
+
   def to_absolute (rel_links)
     host = host.chop if @host[-1] == "/"
     web_extensions = %w[ htm html asp aspx php py pl do / ]
@@ -74,7 +74,7 @@ end
       link = urldecode link
       if html? link
         if link.start_with? "/"
-          expanded_links << @host + link 
+          expanded_links << @host + link
         else
           expanded_links << @host + "/" + link
         end
@@ -91,7 +91,7 @@ end
     end
     return crawled_links
   end
-  
+
   def print_output(*string)
     string = string[0] || ""
     puts string
@@ -104,13 +104,13 @@ end
     final_links = final_links.sort.uniq { |link| link[/.*\?\w+/] } # Conseguir links con parametros unicos
 
     print_output "---- External links"
-    print_output @ext_links.sort.uniq 
+    print_output @ext_links.sort.uniq
     print_output
     print_output "---- Absolute links"
-    print_output @abs_links.sort.uniq { |link| link[/.*#\w+/] } 
+    print_output @abs_links.sort.uniq { |link| link[/.*#\w+/] }
     print_output
     print_output "---- Relative links"
-    print_output @rel_links.sort.uniq 
+    print_output @rel_links.sort.uniq
     print_output
     print_output "---- E-mail accounts (:mailto)"
     print_output @mail_links.sort.uniq.map { |m| m.sub('mailto:','') }
