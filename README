@@ -1,4 +1,3 @@
-
 Dirfuzz
 =============
 
@@ -9,12 +8,12 @@ Usage
 
 Basic usage:
 
-`./dirfuzz host [options]`
+./dirfuzz host [options]
 
 
 To see the available options use:
 
-`./dirfuzz -h`
+./dirfuzz -h
 
 Requirements
 -------
@@ -26,9 +25,12 @@ term-ansicolor
 nokogiri
 work_queue
 
-If you run on windows you will need to turn the colors off or use (http://adoxa.3eeweb.com/ansicon/index.html) ansicon
+If you run on windows you will need to turn the colors off or use ansicon (http://adoxa.3eeweb.com/ansicon/index.html)
 
+License
+-------
 
+Dirfuzz is distributed under the GNU General Public License, see COPYING for details.
 
 
 
