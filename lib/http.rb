@@ -97,8 +97,8 @@ class Http
       else buff = "HEAD "
     end
     
-    buff += path + " HTTP/1.1\r\n"
-    buff += "Host: " + host + "\r\n"
+    buff += "#{path} HTTP/1.1\r\n"
+    buff += "Host: #{host}\r\n"
     buff += "Connection: close\r\n"
     buff += "Accept-Encoding: identity; q=1, gzip; q=0.5\r\n"  # Prefer no encoding over gzip...  
 
@@ -110,7 +110,7 @@ class Http
       end
         end
     end
-    
+
     buff += "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/4.0\r\n" if agentset == 0
 
     if method == "post"
@@ -122,19 +122,21 @@ class Http
     end
     send_request(ip,port,buff)
    end
-    
+
   def self.send_request (ip, port, buff)
-    # TO DO: Add SSL support
-    sc = timeout 5 do     # Throw an expection Timeout::Error if we can't connect in 5 seconds
+    # TO DO: Add SSL and proxy support
+    sc = timeout 5 do     # Throw an exception Timeout::Error if we can't connect in 5 seconds
       TCPSocket.open(ip, port)
     end
     sc.write(buff)
-    res = String.new
-    while data = sc.read(1024)   # Read all data from the socket
-      res += data
+    sc.sync = true
+    res = []
+    while data = sc.read(2048)   # Read all data from the socket
+      res << data
     end
-    obj = Response.new(res)
     sc.close
+    obj = Response.new(res.join(''))
+
     return obj   # Return a response object
   end
 
