@@ -15,6 +15,17 @@ To see the available options use:
 
 ./dirfuzz -h
 
+
+If you are getting alot of redirects try with the -i option which will ignore these.
+
+./dirfuzz host -i
+
+To enable extraction of links using the crawler module use -l 0 or -l 1,
+the difference being the depth of the crawling, 
+just frontpage links or frontpage links and use these to dig a bit depeer.
+
+
+
 Requirements
 -------
 
