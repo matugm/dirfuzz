@@ -20,8 +20,7 @@ If you are getting alot of redirects try with the -i option which will ignore th
 
 ./dirfuzz host -i
 
-To enable extraction of links using the crawler module use -l 0 or -l 1, the difference being the depth of the crawling, 
-just frontpage links or frontpage links and use these to dig a bit depeer.
+To enable extraction of links using the crawler module use -l 0 or -l 1, the difference being the depth of the crawling, just frontpage links or frontpage links and use these to dig a bit depeer.
 
 
 While the included wordlist is not optimized for finding files you can still use it for this task with the -e option.
