@@ -1,4 +1,3 @@
-
 # Crawler module for Dirfuzz, limited to 1 level of depth.
 
 require 'nokogiri'
@@ -18,7 +17,6 @@ class Crawler
 
   def initialize(host,html)
     @host = host + ""
-    #get = Http.open(@host)
 
     @links = parse html
 
