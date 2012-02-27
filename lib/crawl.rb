@@ -44,6 +44,7 @@ end
 
   def split_links(links)
     links.each do |link|
+      link = urldecode(link)
       if link.start_with? "http://" + @host
         @abs_links << link
       elsif link.include? "http://"
@@ -68,7 +69,6 @@ end
     host = host.chop if @host[-1] == "/"
     expanded_links = Array.new
     rel_links.each do |link|
-      link = urldecode link
       if html? link
         if link.start_with? "/"
           expanded_links << @host + link
