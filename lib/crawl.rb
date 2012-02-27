@@ -57,7 +57,7 @@ end
   end
 
   def html? (link)
-    web_extensions = %w[ htm html asp aspx php py pl do / ]
+    web_extensions = %w[ htm html asp aspx jsp php py pl do / ]
     web_extensions.each do |extension|
      return true if link.include? extension
     end
@@ -66,7 +66,6 @@ end
 
   def to_absolute (rel_links)
     host = host.chop if @host[-1] == "/"
-    web_extensions = %w[ htm html asp aspx php py pl do / ]
     expanded_links = Array.new
     rel_links.each do |link|
       link = urldecode link
