@@ -57,28 +57,32 @@ optparse = OptionParser.new do |opts|
 opts.banner = banner
 
    @options[:redir] = 0
-   opts.on( '-i', '--ignore', 'Ignore redirects.' ) do
-     @options[:redir] = 1
+   opts.on( '-i', '--ignore [c:code]', 'Ignore redirects or a specific http code.' ) do |ignore|
+    if ignore == nil    # We only get nil if the option is passed, but without an argument.
+      @options[:redir] = 1 
+    else
+      @options[:redir] = ignore
+    end
   end
 
    @options[:nocolors] = false
    opts.on( '-u', '--uncolor', 'Disable colored output.' ) do
-     @options[:nocolors] = true
+    @options[:nocolors] = true
   end
 
    @options[:path] = nil
    opts.on( '-p', '--path path', 'Start path (Default: /)' ) do |path|
-     @options[:path] = path
+    @options[:path] = path
   end
 
    @options[:ext] = nil
    opts.on( '-e', '--ext extension', 'Fuzz for files with this extension, instead of dirs.' ) do |ext|
-     @options[:ext] = ext
+    @options[:ext] = ext
   end
 
    @options[:file] = nil
    opts.on( '-o', '--out file', 'Write output to file.' ) do |file|
-     @options[:file] = file
+    @options[:file] = file
   end
 
    @options[:links] = nil
@@ -306,6 +310,7 @@ for url in lines do   # For each line in our dictionary...
       redir_do(get.headers['Location'],output)
     end
   elsif (code.found_something?)    # Check if we found something and print output
+    next if code.ignore? @options[:redir]
     print "#{reset}" if $stdout.isatty
     print_output(output[0],output[1])
   end

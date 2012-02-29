@@ -20,10 +20,21 @@ module Util
     def ok
       @code == 200
     end
+
+    def forbidden?
+      @code == 403
+    end
+
+    def ignore? (ignore_code)
+      return false if ignore_code.instance_of? Fixnum
+      @code == ignore_code.split(':')[1].to_i
+    end
     
     def name
       @code_with_name
     end
+
+    attr_reader :code
   end
 
   def print_output (string,*array)
