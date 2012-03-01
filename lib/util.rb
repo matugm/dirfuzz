@@ -37,41 +37,23 @@ module Util
     attr_reader :code
   end
 
-  def print_output (string,*array)
-    index = 0
-    
-    if @options[:nocolors] == 0
-      string.split.each do |word|
-        case word
-          when "%yellow"
-          string.sub!("%yellow",array[index].yellow.bold)
-          index += 1
-          when "%green"
-          string.sub!("%green",array[index].green.bold)
-          index += 1
-          when "%red"
-          string.sub!("%red",array[index].red.bold)
-          index += 1
-        end
-      end
+  def print_output (msg,*colored_words)
 
-    else 
-      string.split.each do |word|
+    coloring = OutputColor.new(colored_words, @options[:nocolors])
+    
+    msg.split.each do |word|
       case word
-          when "%yellow"
-          string.sub!("%yellow",array[index])
-          index += 1
-          when "%green"
-          string.sub!("%green",array[index])
-          index += 1
-          when "%red"
-          string.sub!("%red",array[index])
-          index += 1
-        end
+        when "%yellow"
+          msg.sub! "%yellow",coloring.color(:yellow)
+        when "%green"
+          msg.sub! "%green",coloring.color(:green)
+        when "%red"
+          msg.sub! "%red", coloring.color(:red)
       end
     end
-    puts string
-    @ofile.puts string.gsub(/\e\[1m\e\[3.m|\[0m|\e/,'') if @options[:file]
+
+    puts msg
+    @ofile.puts msg.gsub(/\e\[1m\e\[3.m|\[0m|\e/,'') if @options[:file]
   end
   
   def urldecode(input)
@@ -83,4 +65,21 @@ module Util
   return decoded
   end
 
+end
+
+
+class OutputColor
+
+  def initialize(words,coloring)
+    @index = 0
+    @words = words
+    @coloring = coloring
+  end
+
+  def color(color_name)
+    result = instance_eval "@words[@index].#{color_name}.bold"
+    result = @words[@index] if @coloring == 1
+    @index += 1
+    return result
+  end
 end
