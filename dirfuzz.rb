@@ -41,9 +41,9 @@ clear = "\e[0K"
 reset = cr + clear
 @reset = reset
 
-banner = "DirFuzz 1.4 by matugm\nUsage: #{$0} url [options]\n"
+banner = "DirFuzz 1.4 by matugm\nUsage: #{$0} host[:port] [options]\n"
 
-if ARGV[0] == nil or ARGV[0] !~ /.+\..+/ and ARGV[0] != "localhost" and ARGV[0] != "-h"
+if (ARGV[0] == nil or ARGV[0] !~ /.+\..+/) and ARGV[0] !~ /^localhost/ and ARGV[0] != "-h"
   puts banner + "Please use -h for help."
   exit()
 else
@@ -211,7 +211,7 @@ print_output("%green %yellow","[+] Server:","#{get.headers['Server']}\n\n")
 
 if (get.code == 301 or get.code == 302)
   if get.headers['Location'].include? "https://"
-    puts "Sorry couldn't retrieve links - Main page redirected to SSL site and it isn't implemented yet." if @options[:links]
+    puts "Sorry couldn't retrieve links - Main page redirected to SSL site, you may want to try setting the port to 443." if @options[:links]
   elsif get.headers['Location'].include? "http://"
     get = Http.open(get.headers['Location'])
   else

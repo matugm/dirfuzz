@@ -3,6 +3,7 @@
 # This is a custom http library for dirfuzz and other tools
 
 require 'socket'
+require 'openssl'
 require 'timeout'
 require 'zlib'
 require 'stringio'
@@ -129,11 +130,11 @@ class Http
 
   def self.connection(ip,port)
     socket = TCPSocket.open(ip, port)
-    if port == 443
+    if port == "443"
       context = OpenSSL::SSL::SSLContext.new
       ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
       ssl_client.connect
-      socket = ssl_client
+      return ssl_client
     end
     return socket
   end
