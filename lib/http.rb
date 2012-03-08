@@ -51,6 +51,7 @@ class Http
 # Resolves a name and returns the ip
   def self.resolv (host)
       begin
+        host = port_split(host)[0]
         ip = Resolv.getaddress host
         nxredir(ip)
       rescue
@@ -66,8 +67,6 @@ class Http
   def self.port_split (host)
     host, port = host.split(/:/)
     port ||= 80
-puts port
-puts host
     return host,port
   end
 # Build, send and handle the actual http request
@@ -114,7 +113,7 @@ puts host
   def self.send_request (ip, port, buff)
     # TO DO: Add SSL and proxy support
     sc = timeout 5 do     # Throw an exception Timeout::Error if we can't connect in 5 seconds
-      TCPSocket.open(ip, port)
+      connection(ip, port)
     end
     sc.write(buff)
     sc.sync = true
@@ -127,6 +126,18 @@ puts host
 
     return obj   # Return a response object
   end
+
+  def self.connection(ip,port)
+    socket = TCPSocket.open(ip, port)
+    if port == 443
+      context = OpenSSL::SSL::SSLContext.new
+      ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
+      ssl_client.connect
+      socket = ssl_client
+    end
+    return socket
+  end
+
 end
 
 class NxRedir < StandardError
