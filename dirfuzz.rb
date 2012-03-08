@@ -72,6 +72,10 @@ opts.banner = banner
 
    @options[:path] = nil
    opts.on( '-p', '--path path', 'Start path (Default: /)' ) do |path|
+    unless path.start_with? "/"
+      puts "[-] The path must start with a /"
+      exit -1
+    end
     @options[:path] = path
   end
 
