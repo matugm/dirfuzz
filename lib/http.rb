@@ -64,23 +64,10 @@ class Http
 # Check if the url ends with a colon and splits it, so we can use 
 # the supplied port, otherwise sets the port to 80
   def self.port_split (host)
-    host = host.split(/\/\//)
-    if host[1]
-      host = host[1]
-    else
-      host = host[0]
-    end
-
-    host = host.split(/\//)
-    host = host[0]
-
-    host = host.split(/:/)
-    if host[1]
-      port = host[1]
-    else
-      port = 80
-    end
-    host = host[0]
+    host, port = host.split(/:/)
+    port ||= 80
+puts port
+puts host
     return host,port
   end
 # Build, send and handle the actual http request
@@ -107,8 +94,8 @@ class Http
         buff += "#{header}\r\n"
         if header =~ /User-Agent/i
           agentset = 1
-      end
         end
+      end
     end
 
     buff += "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/4.0\r\n" if agentset == 0
@@ -120,8 +107,9 @@ class Http
     else
       buff += "\r\n"
     end
+
     send_request(ip,port,buff)
-   end
+  end
 
   def self.send_request (ip, port, buff)
     # TO DO: Add SSL and proxy support
@@ -139,15 +127,14 @@ class Http
 
     return obj   # Return a response object
   end
+end
 
 class NxRedir < StandardError
 end
 
-end
-
 class Response
 
-  def initialize (res)
+  def initialize(res)
     @res = res
     @headers = Hash.new
     
