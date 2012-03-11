@@ -112,10 +112,10 @@ class Crawler
     print_output @abs_links.sort.uniq { |link| link[/.*#\w+/] }
     print_output
     print_output "---- Relative links"
-    print_output @rel_links.sort.uniq
+    print_output @rel_links.sort.uniq { |link| link[/(?:\/\w+)+/] }
     print_output
     print_output "---- E-mail accounts (:mailto)"
-    print_output @mail_links.sort.uniq.map { |m| m.sub('mailto:','') }
+    print_output @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }.uniq.map { |m| m.sub('mailto:','') }
     print_output
     print_output "**** Parametized queries"
     print_output final_links.grep(/\?/)
