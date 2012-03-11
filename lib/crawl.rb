@@ -40,7 +40,7 @@ class Crawler
       crawled_links = crawl(only_web)
       split_links crawled_links
     end
-end
+  end
 
   def split_links(links)
     links.each do |link|
@@ -89,6 +89,10 @@ end
     return crawled_links
   end
 
+  def normalize
+    @abs_links.map { |link| link.sub('http://','') }
+  end
+
   def print_output(*string)
     string = string[0] || ""
     puts string
@@ -97,6 +101,7 @@ end
 
   def print_links(ofile)
     @ofile = ofile
+    @abs_links = normalize
     final_links = @abs_links + to_absolute(@rel_links)
     final_links = final_links.sort.uniq { |link| link[/.*\?\w+/] } # Conseguir links con parametros unicos
 
@@ -117,4 +122,4 @@ end
     print_output
   end
 
-  end
+end
