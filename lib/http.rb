@@ -13,7 +13,7 @@ class Http
 # Sets the method to GET and calls request
   def self.get (host,ip,path,headers)
     method = "get"
-    request(host,ip,path,method)
+    request(host,ip,path,method,headers)
   end
 # Simple method for a quick GET request
   def self.open (host)
@@ -30,12 +30,12 @@ class Http
     method = "post"
     request(host,ip,path,method,headers,data)
   end
-  
+
   def self.head (host,ip,path,headers)
     method = "head"
     request(host,ip,path,method)
   end
-  
+
   def self.nxredir (ip)
     begin
       nxredir = Socket.getaddrinfo("www.random-stuff-" + rand(5000).to_s + ".com", nil)
@@ -48,7 +48,7 @@ class Http
       sleep (2)
     end
   end
-  
+
 # Resolves a name and returns the ip
   def self.resolv (host)
       begin
@@ -62,8 +62,8 @@ class Http
       end
     return ip
   end
-  
-# Check if the url ends with a colon and splits it, so we can use 
+
+# Check if the url ends with a colon and splits it, so we can use
 # the supplied port, otherwise sets the port to 80
   def self.port_split (host)
     host, port = host.split(/:/)
@@ -77,17 +77,17 @@ class Http
 
     host,port = port_split(host)
     agentset = 0
- 
+
     case method
       when "get"  then buff = "GET "
       when "post" then buff = "POST "
       else buff = "HEAD "
     end
-    
+
     buff += "#{path} HTTP/1.1\r\n"
     buff += "Host: #{host}\r\n"
     buff += "Connection: close\r\n"
-    buff += "Accept-Encoding: identity; q=1, gzip; q=0.5\r\n"  # Prefer no encoding over gzip...  
+    buff += "Accept-Encoding: identity; q=1, gzip; q=0.5\r\n"  # Prefer no encoding over gzip...
 
     if headers != ""
       headers.each do |header|
@@ -149,15 +149,15 @@ class Response
   def initialize(res)
     @res = res
     @headers = Hash.new
-    
+
     split_data
     parse_headers
     set_size
     check_encoding
     set_code
   end
-    
-  def split_data  
+
+  def split_data
     b = res.split("\r\n\r\n",2)
     @res = res.split("\r")
     @raw_headers = b[0].split("\r")
@@ -180,18 +180,18 @@ class Response
       @len = @body.length
     end
   end
-  
+
   def check_encoding
     if headers["Transfer-Encoding"] == "chunked"
       decode_chunked
     end
-    
+
     if headers["Content-Encoding"] == "gzip" and @body.length > 0
       @body = Zlib::GzipReader.new(StringIO.new(@body)).read
       @len = @body.length
     end
    end
-   
+
   def decode_chunked
     puntero = 0
     tmp_buffer = ""
@@ -204,7 +204,7 @@ class Response
     @body = tmp_buffer
     @len = @body.length
   end
-   
+
   def set_code
     code = res[0].split(" ")
     @code = code[1].to_i
