@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Dirfuzz : Directory discovery and info gathering of web applications." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Dirfuzz</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/matugm/dirfuzz">Fork Me on GitHub</a>
+
+          <h1 id="project_title">Dirfuzz</h1>
+          <h2 id="project_tagline">Directory discovery and info gathering of web applications.</h2>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/matugm/dirfuzz/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/matugm/dirfuzz/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h2>Welcome to the Dirfuzz website.</h2>
+
+<p>Features:  </p>
+
+<ul>
+<li>Enumerate unlinked ("hidden") directories and files.</li>
+<li>Identify redirects and directory indexes.</li>
+<li>Crawl a site to extract links and email address.</li>
+<li>Multi-threaded</li>
+</ul><h3>Basic usage</h3>
+
+<p><strong>Basic fuzz</strong>  </p>
+
+<pre><code>$ ./dirfuzz host
+</code></pre>
+
+<p><strong>Getting help</strong> </p>
+
+<pre><code>$ ./dirfuzz -h
+</code></pre>
+
+<p><strong>Using a different base path</strong> </p>
+
+<pre><code>$ ./dirfuzz host -p /path
+</code></pre>
+
+<h3>Requirements</h3>
+
+<p>Ruby 1.9 with the following gems installed:<br>
+(to install a gem use: gem install gem_name)  </p>
+
+<ul>
+<li>term-ansicolor</li>
+<li>nokogiri</li>
+<li>work_queue</li>
+</ul><p>If you are using windows you will need ANSICON <a href="http://adoxa.3eeweb.com/ansicon/">http://adoxa.3eeweb.com/ansicon/</a> to be able to see the colored output.</p>
+
+<h3>Screenshot</h3>
+
+<p><img src="http://blackbytes.files.wordpress.com/2012/02/tool.jpg?w=590&amp;h=256" alt="Dirfuzz 1.4"></p>
+
+<h3>Support or Contact</h3>
+
+<p>Having trouble with Dirfuzz? You can contact me at matugm@gmail.com and I’ll happy to help you out.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Dirfuzz maintained by <a href="https://github.com/matugm">matugm</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
