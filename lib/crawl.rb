@@ -93,10 +93,21 @@ class Crawler
     @abs_links.map { |link| link.sub('http://','') }
   end
 
-  def print_output(*string)
-    string = string[0] || ""
+  def puts_file(string)
     puts string
     @ofile.puts string if @ofile
+  end
+
+  def print_link(title,data)
+    puts_file title
+
+    if data == []
+      puts_file 'nothing found.'
+    else
+      puts_file data
+    end
+
+    puts_file ''
   end
 
   def print_links(ofile)
@@ -105,21 +116,11 @@ class Crawler
     final_links = @abs_links + to_absolute(@rel_links)
     final_links = final_links.sort.uniq { |link| link[/.*\?\w+/] } # Conseguir links con parametros unicos
 
-    print_output "---- External links"
-    print_output @ext_links.sort.uniq
-    print_output
-    print_output "---- Absolute links"
-    print_output @abs_links.sort.uniq { |link| link[/.*#\w+/] }
-    print_output
-    print_output "---- Relative links"
-    print_output @rel_links.sort.uniq { |link| link[/(?:\/\w+)+/] }
-    print_output
-    print_output "---- E-mail accounts (:mailto)"
-    print_output @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }.uniq.map { |m| m.sub('mailto:','') }
-    print_output
-    print_output "**** Parametized queries"
-    print_output final_links.grep(/\?/)
-    print_output
+    print_link "[External links]", @ext_links.sort.uniq
+    print_link "[Absolute links]", @abs_links.sort.uniq { |link| link[/.*#\w+/] }
+    print_link "[Relative links]", @rel_links.sort.uniq { |link| link[/(?:\/\w+)+/] }
+    print_link "[E-mail accounts] (:mailto)", @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }.uniq.map { |m| m.sub('mailto:','') }
+    print_link "[Parametized queries]", final_links.grep(/\?/)
   end
 
 end
