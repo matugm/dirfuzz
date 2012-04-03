@@ -45,22 +45,27 @@ class Crawler
   def split_links(links)
     links.each do |link|
       link = urldecode(link)
+      link.sub!(/#.*/,'')
       if link.start_with? "http://" + @host
         @abs_links << link
-      elsif link.include? "http://"
+      elsif link.include? "http://" or link.include? "https://"
         @ext_links << link
       elsif link.start_with? "mailto:"
         @mail_links << link
-      elsif not link.include? ":" and not link.start_with? "#"
+      elsif html? link
         @rel_links << link
+      else
+        topdir = link.scan(/\/\w+\//)[0]
+        @rel_links << topdir if topdir
       end
     end
   end
 
   def html? (link)
-    web_extensions = %w[ htm html asp aspx jsp php py pl do / ]
+    return true if link.start_with? "/" and link.scan(/\.[\w]{1,5}$/) == []
+    web_extensions = %w[ htm html asp aspx jsp php py pl do ]
     web_extensions.each do |extension|
-     return true if link.include? extension
+      return true if (link.end_with? '.' + extension or link.end_with? '/')
     end
     return false
   end
@@ -118,9 +123,8 @@ class Crawler
 
     print_link "[External links]", @ext_links.sort.uniq
     print_link "[Absolute links]", @abs_links.sort.uniq { |link| link[/.*#\w+/] }
-    print_link "[Relative links]", @rel_links.sort.uniq { |link| link[/(?:\/\w+)+/] }
+    print_link "[Relative links]", @rel_links.sort.uniq { |link| link[/.*\/?(?:[\w_-]+)/] }.map { |e| e.gsub(/^\/\w+\/\w+/) { |link| " "*4 + link  } }
     print_link "[E-mail accounts] (:mailto)", @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }.uniq.map { |m| m.sub('mailto:','') }
     print_link "[Parametized queries]", final_links.grep(/\?/)
   end
-
 end
