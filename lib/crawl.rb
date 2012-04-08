@@ -42,6 +42,11 @@ class Crawler
     end
   end
 
+  def base_dir(link)
+    topdir = link.scan(/\/\w+\//)[0]
+    @rel_links << topdir if topdir
+  end
+
   def split_links(links)
     links.each do |link|
       link = urldecode(link)
@@ -54,9 +59,9 @@ class Crawler
         @mail_links << link
       elsif html? link
         @rel_links << link
+        base_dir link
       else
-        topdir = link.scan(/\/\w+\//)[0]
-        @rel_links << topdir if topdir
+        base_dir link
       end
     end
   end
