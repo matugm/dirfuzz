@@ -122,7 +122,7 @@ class Crawler
     final_links = final_links.sort.uniq { |link| link[/.*\?\w+/] } # Conseguir links con parametros unicos
 
     print_link "[External links]", @ext_links.sort.uniq
-    print_link "[Absolute links]", @abs_links.sort.uniq { |link| link[/.*#\w+/] }
+    print_link "[Absolute links]", @abs_links.sort.uniq { |link| link[/.*\?(?:\w+=)(?=\d+)|[\w\/.-]+/] }
     print_link "[Relative links]", @rel_links.sort.uniq { |link| link[/.*\/?(?:[\w_-]+)/] }.map { |e| e.gsub(/^\/\w+\/\w+/) { |link| " "*4 + link  } }
     print_link "[E-mail accounts] (:mailto)", @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }.uniq.map { |m| m.sub('mailto:','') }
     print_link "[Parametized queries]", final_links.grep(/\?/)

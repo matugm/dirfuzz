@@ -59,7 +59,7 @@ opts.banner = banner
    @options[:redir] = 0
    opts.on( '-i', '--ignore [c:code]', 'Ignore redirects or a specific http code.' ) do |ignore|
     if ignore == nil    # We only get nil if the option is passed, but without an argument.
-      @options[:redir] = 1 
+      @options[:redir] = 1
     else
       @options[:redir] = ignore
     end
@@ -234,7 +234,7 @@ if generator
 end
 
 if @options[:links]
-  
+
   level = @options[:links].to_i
   puts "\n[+] Links: "
   print "Crawling..." if level == 1
@@ -251,18 +251,18 @@ pbar = ProgressBar.new("Fuzzing", 100, out=$stdout) if $stdout.isatty # Setup ou
 pcount = 0
 
 def redir_do(location,output)
-  
+
     if location.start_with? "http://"
       relative = false
     else
       relative = true
     end
-  
+
     orig_loc = location.sub("http://","")
     location = location.gsub(" ","")
     location = location.split("/")
     host = location[2]
-    
+
     if location[3] == nil
       lpath = "/"
     else
