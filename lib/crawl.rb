@@ -31,15 +31,21 @@ class Crawler
     @rel_links.delete_if { |link| link == "/" }
 
     if level > 0
-      only_web = Array.new
-      @abs_links.each do |link|
-        only_web << link if html? link
-      end
-      only_web += to_absolute @rel_links
+      only_web = []
+      only_web += filtered_absolute_links()
+      only_web += expanded_relative_links()
 
       crawled_links = crawl(only_web)
       split_links crawled_links
     end
+  end
+
+  def filtered_absolute_links
+    html_files = []
+    @abs_links.each do |link|
+      html_files << link if html? link
+    end
+    return html_files
   end
 
   def base_dir(link)
@@ -75,10 +81,10 @@ class Crawler
     return false
   end
 
-  def to_absolute (rel_links)
+  def expanded_relative_links ()
     host = host.chop if @host[-1] == "/"
     expanded_links = Array.new
-    rel_links.each do |link|
+    @rel_links.each do |link|
       if html? link
         if link.start_with? "/"
           expanded_links << @host + link
@@ -123,7 +129,7 @@ class Crawler
   def print_links(ofile)
     @ofile = ofile
     @abs_links = normalize
-    final_links = @abs_links + to_absolute(@rel_links)
+    final_links = @abs_links + expanded_relative_links()
     final_links = final_links.sort.uniq { |link| link[/.*\?\w+/] } # Conseguir links con parametros unicos
 
     print_link "[External links]", @ext_links.sort.uniq
