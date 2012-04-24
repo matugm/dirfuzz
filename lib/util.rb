@@ -16,7 +16,7 @@ module Util
     def found_something?
       @code != 404
     end
-    
+
     def ok
       @code == 200
     end
@@ -29,7 +29,7 @@ module Util
       return false if ignore_code.instance_of? Fixnum
       @code == ignore_code.split(':')[1].to_i
     end
-    
+
     def name
       @code_with_name
     end
@@ -40,7 +40,7 @@ module Util
   def print_output (msg,*colored_words)
 
     coloring = OutputColor.new(colored_words, @options[:nocolors])
-    
+
     msg.split.each do |word|
       case word
         when "%yellow"
@@ -49,13 +49,15 @@ module Util
           msg.sub! "%green",coloring.color(:green)
         when "%red"
           msg.sub! "%red", coloring.color(:red)
+        when "%blue"
+          msg.sub! "%blue", coloring.color(:blue)
       end
     end
 
     puts msg
     @ofile.puts msg.gsub(/\e\[1m\e\[3.m|\[0m|\e/,'') if @options[:file]
   end
-  
+
   def urldecode(input)
   decoded = input + ""
   input.scan(/%[0-9a-f]{2}/i) do |h|
