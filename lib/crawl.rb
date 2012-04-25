@@ -8,8 +8,7 @@ class Crawler
     html = Nokogiri::HTML.parse(html) unless html.kind_of? Nokogiri::HTML::Document
     a_tags = html.xpath("//a[@href]")
    #form_tags = html.xpath("//form[@action]")  # Parsing of form tags, not implemented yet.
-    links = Array.new
-    ext_links = Array.new
+    links = []
     a_tags.each { |a| links << a[:href]  }
     links = links.sort.uniq
     return links
@@ -20,24 +19,24 @@ class Crawler
 
     @links = parse html
 
-    @abs_links = Array.new
-    @ext_links = Array.new
-    @rel_links = Array.new
-    @mail_links = Array.new
+    @abs_links = []
+    @ext_links = []
+    @rel_links = []
+    @mail_links = []
   end
 
   def run(level)
     split_links @links
-    @rel_links.delete_if { |link| link == "/" }
 
     if level > 0
-      only_web = []
-      only_web += filtered_absolute_links()
-      only_web += expanded_relative_links()
+      to_crawl = []
+      to_crawl += filtered_absolute_links()
+      to_crawl += expanded_relative_links()
 
-      crawled_links = crawl(only_web)
+      crawled_links = crawl(to_crawl)
       split_links crawled_links
     end
+    @rel_links.delete_if { |link| link == "/" }
   end
 
   def filtered_absolute_links
@@ -46,6 +45,21 @@ class Crawler
       html_files << link if html? link
     end
     return html_files
+  end
+
+  def expanded_relative_links
+    host = host.chop if @host[-1] == "/"
+    expanded_links = []
+    @rel_links.each do |link|
+      if html? link
+        if link.start_with? "/"
+          expanded_links << @host + link
+        else
+          expanded_links << @host + "/" + link
+        end
+      end
+    end
+    return expanded_links
   end
 
   def base_dir(link)
@@ -57,9 +71,9 @@ class Crawler
     links.each do |link|
       link = urldecode(link)
       link.sub!(/#.*/,'')
-      if link.start_with? "http://" + @host
+      if (link.index %r[http(s)?://#{@host}]) == 0
         @abs_links << link
-      elsif link.include? "http://" or link.include? "https://"
+      elsif (link.index %r[http(s)?://]) == 0
         @ext_links << link
       elsif link.start_with? "mailto:"
         @mail_links << link
@@ -81,24 +95,10 @@ class Crawler
     return false
   end
 
-  def expanded_relative_links ()
-    host = host.chop if @host[-1] == "/"
-    expanded_links = Array.new
-    @rel_links.each do |link|
-      if html? link
-        if link.start_with? "/"
-          expanded_links << @host + link
-        else
-          expanded_links << @host + "/" + link
-        end
-      end
-    end
-    return expanded_links
-  end
 
-  def crawl(only_web)
-    crawled_links = Array.new
-    only_web.each do |link|
+  def crawl(to_crawl)
+    crawled_links = []
+    to_crawl.each do |link|
       html = Http.open(link)
       crawled_links += parse html.body
     end

@@ -28,7 +28,6 @@ require 'rubygems'
 require 'term/ansicolor'
 require 'work_queue'
 require 'optparse'
-require 'nokogiri'
 
 include Util
 
@@ -56,8 +55,8 @@ optparse = OptionParser.new do |opts|
 
 opts.banner = banner
 
-   @options[:redir] = 0
-   opts.on( '-i', '--ignore [c:code]', 'Ignore redirects or a specific http code.' ) do |ignore|
+  @options[:redir] = 0
+  opts.on( '-i', '--ignore [c:code]', 'Ignore redirects or a specific http code.' ) do |ignore|
     if ignore == nil    # We only get nil if the option is passed, but without an argument.
       @options[:redir] = 1
     else
@@ -65,13 +64,13 @@ opts.banner = banner
     end
   end
 
-   @options[:nocolors] = false
-   opts.on( '-u', '--uncolor', 'Disable colored output.' ) do
+  @options[:nocolors] = false
+  opts.on( '-u', '--uncolor', 'Disable colored output.' ) do
     @options[:nocolors] = true
   end
 
-   @options[:path] = nil
-   opts.on( '-p', '--path path', 'Start path (Default: /)' ) do |path|
+  @options[:path] = nil
+  opts.on( '-p', '--path path', 'Start path (Default: /)' ) do |path|
     unless path.start_with? "/"
       puts "[-] The path must start with a /"
       exit -1
@@ -79,18 +78,18 @@ opts.banner = banner
     @options[:path] = path
   end
 
-   @options[:ext] = nil
-   opts.on( '-e', '--ext extension', 'Fuzz for files with this extension, instead of dirs.' ) do |ext|
+  @options[:ext] = nil
+  opts.on( '-e', '--ext extension', 'Fuzz for files with this extension, instead of dirs.' ) do |ext|
     @options[:ext] = ext
   end
 
-   @options[:file] = nil
-   opts.on( '-o', '--out file', 'Write output to file.' ) do |file|
+  @options[:file] = nil
+  opts.on( '-o', '--out file', 'Write output to file.' ) do |file|
     @options[:file] = file
   end
 
-   @options[:links] = nil
-   opts.on( '-l level', '--links level',
+  @options[:links] = nil
+  opts.on( '-l level', '--links level',
    'With level 0 extract all links from frontpage,
     with level 1 perform a crawling of one level of depth to extract more links.' ) do |level|
     if not level.scan(/[01]/).empty?
@@ -101,8 +100,8 @@ opts.banner = banner
     end
   end
 
-   #@options[:get] = false
-   #opts.on( '-g', '--get', 'Use GET method (Default: HEAD)' ) do
+  #@options[:get] = false
+  #opts.on( '-g', '--get', 'Use GET method (Default: HEAD)' ) do
      #@options[:get] = true
   #end          # TODO: think new help text and flag to set head, get is default now
 
@@ -120,7 +119,6 @@ opts.banner = banner
     puts opts
     exit
   end
-
 end
 
 
@@ -185,7 +183,7 @@ threads = WorkQueue.new(threads,threads*2) # Setup thread queue
 trap("INT") do   # Capture Ctrl-C
   print_output("%red","\n[-] Stoped by user request...")
   exit 1
-  end
+end
 
 beginning = Time.now
 
@@ -236,14 +234,14 @@ end
 if @options[:links]
 
   level = @options[:links].to_i
-  puts "\n[+] Links: "
+  print_output("%blue","\n[+] Links: ")
   print "Crawling..." if level == 1
   crawler = Crawler.new($baseurl,html)
   crawler.run(level)
   puts "#{reset}"
   crawler.print_links @ofile
 
-  puts "\n[+] Dirs: "
+  print_output("%blue","\n[+] Dirs: ")
   puts
 end
 
@@ -252,36 +250,36 @@ pcount = 0
 
 def redir_do(location,output)
 
-    if location.start_with? "http://"
-      relative = false
+  if location.start_with? "http://"
+    relative = false
+  else
+    relative = true
+  end
+
+  orig_loc = location.sub("http://","")
+  location = location.gsub(" ","")
+  location = location.split("/")
+  host = location[2]
+
+  if location[3] == nil
+    lpath = "/"
+  else
+    lpath = "/" + location[3]
+  end
+
+  if relative
+    host = $baseurl
+    if location[1] == nil
+      lpath = @options[:path] + location[0]
     else
-      relative = true
+      lpath = "/" + location[1]
     end
+  end
 
-    orig_loc = location.sub("http://","")
-    location = location.gsub(" ","")
-    location = location.split("/")
-    host = location[2]
+  fredirect = Http.get(host,$ip,lpath,"")  # Send request to find out more about the redirect...
 
-    if location[3] == nil
-      lpath = "/"
-    else
-      lpath = "/" + location[3]
-    end
-
-    if relative
-      host = $baseurl
-      if location[1] == nil
-        lpath = @options[:path] + location[0]
-      else
-        lpath = "/" + location[1]
-      end
-    end
-
-    fredirect = Http.get(host,$ip,lpath,"")  # Send request to find out more about the redirect...
-
-    print "#{@reset}" if $stdout.isatty
-    print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
+  print "#{@reset}" if $stdout.isatty
+  print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
 
 end
 
@@ -292,8 +290,8 @@ for url in lines do   # For each line in our dictionary...
   req = url.chomp
   path = @options[:path] + req + ext      # Add together the start path, the dir/file to test and the extension
 
+  get = Http.get($baseurl,$ip,path,headers)  if @options[:get] == true  # Send a get request (default)
   get = Http.head($baseurl,$ip,path,headers) if @options[:get] == false # Send a head request
-  get = Http.get($baseurl,$ip,path,headers) if @options[:get] == true  # Send a get request (default)
   code = Code.new(get)
 
   path.chomp!
