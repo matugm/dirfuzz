@@ -59,29 +59,26 @@ module Util
   end
 
   def urldecode(input)
-  decoded = input + ""
-  input.scan(/%[0-9a-f]{2}/i) do |h|
-   ascii = h.split('%')[1].hex.chr
-   decoded.gsub!(h,ascii)
-  end
-  return decoded
-  end
-
-end
-
-
-class OutputColor
-
-  def initialize(words,coloring)
-    @index = 0
-    @words = words
-    @coloring = coloring
+    decoded = input + ""
+    input.scan(/%[0-9a-f]{2}/i) do |h|
+      ascii = h.split('%')[1].hex.chr
+      decoded.gsub!(h,ascii)
+    end
+    return decoded
   end
 
-  def color(color_name)
-    result = instance_eval "@words[@index].#{color_name}.bold"
-    result = @words[@index] if @coloring == 1
-    @index += 1
-    return result
+  class OutputColor
+    def initialize(words,coloring)
+      @index = 0
+      @words = words
+      @coloring = coloring
+    end
+
+    def color(color_name)
+      result = instance_eval "@words[@index].#{color_name}.bold"
+      result = @words[@index] if @coloring == 1
+      @index += 1
+      return result
+    end
   end
 end
