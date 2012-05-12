@@ -46,8 +46,8 @@ if (ARGV[0] == nil or ARGV[0] !~ /.+\..+/) and ARGV[0] !~ /^localhost/ and ARGV[
   puts banner + "Please use -h for help."
   exit()
 else
-  $baseurl = ARGV[0].sub("http://","")
-  $baseurl.chop! if $baseurl[-1] == "/"
+  @baseurl = ARGV[0].sub("http://","")
+  @baseurl.chop! if @baseurl[-1] == "/"
 end
 
 @options = {}
@@ -189,13 +189,13 @@ beginning = Time.now
 
 puts "\e[H\e[2J" if $stdout.isatty
 
-$ip = Http.resolv($baseurl) # Resolve name or just return the ip
+@ip = Http.resolv(@baseurl) # Resolve name or just return the ip
 
 
-print_output("%green %yellow","[+] Starting fuzz for:",$baseurl)
+print_output("%green %yellow","[+] Starting fuzz for:",@baseurl)
 
 begin
-  get = Http.get($baseurl,$ip,@options[:path],headers)
+  get = Http.get(@baseurl,@ip,@options[:path],headers)
 rescue Timeout::Error
   puts "[-] Connection timed out - the host isn't responding.\n\n"
   exit
@@ -217,7 +217,7 @@ if (get.code == 301 or get.code == 302)
   elsif get.headers['Location'].include? "http://"
     get = Http.open(get.headers['Location'])
   else
-    get = Http.open($baseurl + get.headers['Location'])
+    get = Http.open(@baseurl + get.headers['Location'])
   end
 end
 
@@ -236,7 +236,7 @@ if @options[:links]
   level = @options[:links].to_i
   print_output("%blue","\n[+] Links: ")
   print "Crawling..." if level == 1
-  crawler = Crawler.new($baseurl,html)
+  crawler = Crawler.new(@baseurl,html)
   crawler.run(level)
   puts "#{reset}"
   crawler.print_links @ofile
@@ -268,7 +268,7 @@ def redir_do(location,output)
   end
 
   if relative
-    host = $baseurl
+    host = @baseurl
     if location[1] == nil
       lpath = @options[:path] + location[0]
     else
@@ -276,7 +276,7 @@ def redir_do(location,output)
     end
   end
 
-  fredirect = Http.get(host,$ip,lpath,"")  # Send request to find out more about the redirect...
+  fredirect = Http.get(host,@ip,lpath,"")  # Send request to find out more about the redirect...
 
   print "#{@reset}" if $stdout.isatty
   print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
@@ -290,8 +290,8 @@ for url in lines do   # For each line in our dictionary...
   req = url.chomp
   path = @options[:path] + req + ext      # Add together the start path, the dir/file to test and the extension
 
-  get = Http.get($baseurl,$ip,path,headers)  if @options[:get] == true  # Send a get request (default)
-  get = Http.head($baseurl,$ip,path,headers) if @options[:get] == false # Send a head request
+  get = Http.get(@baseurl,@ip,path,headers)  if @options[:get] == true  # Send a get request (default)
+  get = Http.head(@baseurl,@ip,path,headers) if @options[:get] == false # Send a head request
   code = Code.new(get)
 
   path.chomp!
