@@ -126,17 +126,34 @@ class Crawler
     puts_file ''
   end
 
+  def formated_links(type)
+    case type
+    when "external"
+      @ext_links = @ext_links.sort.uniq
+    when "absolute"
+      @abs_links.sort.uniq { |link| link[/.*\?(?:\w+=)(?=\d+)|[\w\/.-]+/] }
+    when "relative"
+      @rel_links = @rel_links.sort.uniq { |link| link[/.*\/?(?:[\w_-]+)/] }
+      @rel_links.map { |e| e.gsub(/^\/\w+\/\w+/) { |link| " "*4 + link  } }
+    when "mail"
+      @mail_links = @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }
+      @mail_links.uniq.map { |m| m.sub('mailto:','') }
+    when "robots"
+      Http.open(@host + '/robots.txt').body.scan(/Disallow: (.*)/).sort.uniq
+    end
+  end
+
   def print_links(ofile)
     @ofile = ofile
     @abs_links = normalize
     final_links = @abs_links + expanded_relative_links()
     final_links = final_links.sort.uniq { |link| link[/.*\?\w+/] } # Conseguir links con parametros unicos
 
-    print_link "[External links]", @ext_links.sort.uniq
-    print_link "[Absolute links]", @abs_links.sort.uniq { |link| link[/.*\?(?:\w+=)(?=\d+)|[\w\/.-]+/] }
-    print_link "[Relative links]", @rel_links.sort.uniq { |link| link[/.*\/?(?:[\w_-]+)/] }.map { |e| e.gsub(/^\/\w+\/\w+/) { |link| " "*4 + link  } }
-    print_link "[E-mail accounts] (:mailto)", @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }.uniq.map { |m| m.sub('mailto:','') }
-    print_link "[Robots.txt]", Http.open(@host + '/robots.txt').body.scan(/Disallow: (.*)/).sort.uniq
-    print_link "[Parametized queries]", final_links.grep(/\?/)
+    print_link "[External links]",  formated_links('external')
+    print_link "[Absolute links]",  formated_links('absolute')
+    print_link "[Relative links]",  formated_links('relative')
+    print_link "[E-mail accounts]", formated_links('mail')
+    print_link "[Robots.txt]",      formated_links('robots')
+    print_link "[Links with parameters]", final_links.grep(/\?/)
   end
 end
