@@ -55,6 +55,12 @@ optparse = OptionParser.new do |opts|
 
 opts.banner = banner
 
+  opts.on('-r', '--read file', 'Read hosts to scan from a file.') do |file|
+    fd = File.open(file)
+    @options[:host_list] = fd.readlines
+    fd.close
+  end
+
   @options[:redir] = 0
   opts.on( '-i', '--ignore [c:code]', 'Ignore redirects or a specific http code.' ) do |ignore|
     if ignore == nil    # We only get nil if the option is passed, but without an argument.
@@ -156,7 +162,6 @@ end
 
 if @options[:file]
   @ofile = File.open(@options[:file],'w+')
-  ofile = @ofile
 end
 
 if @options[:ext]
