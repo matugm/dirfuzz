@@ -51,16 +51,18 @@ class Http
 
 # Resolves a name and returns the ip
   def self.resolv (host)
-      begin
+    begin
+      timeout 10 do
         host = port_split(host)[0]
-        ip = Resolv.getaddress host
+        ip = Resolv.getaddress(host)
         nxredir(ip)
-      rescue
-        puts "[-] Couldn't resolve name: #{host}\n\n"
-        puts "[-] Exiting..."
-        exit
+        return ip
       end
-    return ip
+    rescue
+      puts "[-] Couldn't resolve name: #{host}\n\n"
+      puts "[-] Exiting..."
+      exit
+    end
   end
 
 # Check if the url ends with a colon and splits it, so we can use

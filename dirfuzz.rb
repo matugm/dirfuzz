@@ -42,7 +42,7 @@ reset = cr + clear
 
 banner = "DirFuzz 1.4 by matugm\nUsage: #{$0} host[:port] [options]\n"
 
-if (ARGV[0] == nil or ARGV[0] !~ /.+\..+/) and ARGV[0] !~ /^localhost/ and ARGV[0] != "-h"
+if ARGV[0] == nil
   puts banner + "Please use -h for help."
   exit()
 else
