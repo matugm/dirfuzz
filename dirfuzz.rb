@@ -19,6 +19,7 @@
 
 $: << '.'
 
+require 'lib/fuzz'
 require 'lib/http'
 require 'lib/progressbar'
 require 'lib/util'
@@ -35,19 +36,16 @@ class String
   include Term::ANSIColor
 end
 
-cr = "\r"
-clear = "\e[0K"
-reset = cr + clear
-@reset = reset
+@env = {}
 
-banner = "DirFuzz 1.4 by matugm\nUsage: #{$0} host[:port] [options]\n"
+banner = "DirFuzz 1.5 Dev by matugm\nUsage: #{$0} host[:port] [options]\n"
 
 if ARGV[0] == nil
   puts banner + "Please use -h for help."
   exit()
 else
-  @baseurl = ARGV[0].sub("http://","")
-  @baseurl.chop! if @baseurl[-1] == "/"
+  @env[:baseurl] = ARGV[0].sub("http://","")
+  @env[:baseurl].chop! if @env[:baseurl][-1] == "/"
 end
 
 @options = {}
@@ -55,8 +53,13 @@ optparse = OptionParser.new do |opts|
 
 opts.banner = banner
 
+  @options[:host_list] = Array(@env[:baseurl])
   opts.on('-r', '--read file', 'Read hosts to scan from a file.') do |file|
-    fd = File.open(file)
+    begin
+      fd = File.open(file)
+    rescue Errno::ENOENT
+      abort "The file you specified dosn't seem to exist."
+    end
     @options[:host_list] = fd.readlines
     fd.close
   end
@@ -75,17 +78,21 @@ opts.banner = banner
     @options[:nocolors] = true
   end
 
-  @options[:path] = nil
+  @options[:path] = "/"
   opts.on( '-p', '--path path', 'Start path (Default: /)' ) do |path|
     unless path.start_with? "/"
       puts "[-] The path must start with a /"
       exit -1
     end
     @options[:path] = path
+    @options[:path] += "/"
   end
 
-  @options[:ext] = nil
+  @options[:ext] = "/"
   opts.on( '-e', '--ext extension', 'Fuzz for files with this extension, instead of dirs.' ) do |ext|
+    if ext !~ /\..*/
+      abort "Please specify the extension with a dot, for example -e .php"
+    end
     @options[:ext] = ext
   end
 
@@ -137,16 +144,11 @@ rescue OptionParser::InvalidOption
 end
 
 if @options[:cookie]
-  headers = ["Cookie: #{@options[:cookie]}"]
+  @options[:headers] = ["Cookie: #{@options[:cookie]}"]
 else
-  headers = ""
+  @options[:headers] = ""
 end
 
-unless @options[:path]
-  @options[:path] = ""
-end
-
-@options[:path] += "/"
 
 if @options[:nocolors] or !$stdout.isatty
   @options[:nocolors] = 1
@@ -161,173 +163,30 @@ else
 end
 
 if @options[:file]
-  @ofile = File.open(@options[:file],'w+')
+  @env[:ofile] = File.open(@options[:file],'w+')
 end
 
-if @options[:ext]
-  ext = @options[:ext]
-  if ext !~ /\..*/
-    puts "Please specify the extension with a dot, for example -e .php"
-    exit
-  end
-else
-  ext = "/"
-end
 
 @options[:get] = true
 
 # End of option parsing
 
 file = File.new('data/fdirs.txt','r')  # Load dictionary file
-lines = file.readlines
+@env[:dirs] = file.readlines
 file.close
 
 threads = @options[:threads].to_i
-threads = WorkQueue.new(threads,threads*2) # Setup thread queue
+@env[:thread_queue] = WorkQueue.new(threads,threads*2) # Setup thread queue
 
 trap("INT") do   # Capture Ctrl-C
   print_output("%red","\n[-] Stoped by user request...")
   exit 1
 end
 
-beginning = Time.now
 
-puts "\e[H\e[2J" if $stdout.isatty
-
-@ip = Http.resolv(@baseurl) # Resolve name or just return the ip
-
-
-print_output("%green %yellow","[+] Starting fuzz for:",@baseurl)
-
-begin
-  get = Http.get(@baseurl,@ip,@options[:path],headers)
-rescue Timeout::Error
-  puts "[-] Connection timed out - the host isn't responding.\n\n"
-  exit
-rescue Errno::ECONNREFUSED
-  puts "[-] Connection refused - the host or service is not available.\n\n"
-  exit
-rescue Exception => e
-  puts "[Error] " + e.message
-  puts
-  exit
+@options[:host_list].each do |host|
+  @env[:baseurl] = host.chomp
+  fuzzer = Dirfuzz.new(@options,@env)
+  fuzzer.run
+  sleep 1
 end
-
-print_output("%green %yellow","[+] Server:","#{get.headers['Server']}\n\n")
-
-
-if (get.code == 301 or get.code == 302)
-  if get.headers['Location'].include? "https://"
-    puts "Sorry couldn't retrieve links - Main page redirected to SSL site, you may want to try setting the port to 443." if @options[:links]
-  elsif get.headers['Location'].include? "http://"
-    get = Http.open(get.headers['Location'])
-  else
-    get = Http.open(@baseurl + get.headers['Location'])
-  end
-end
-
-html = Nokogiri::HTML.parse(get.body)
-
-generator = nil
-meta = html.xpath("//meta")
-meta.each { |m| generator = m[:content] if m[:name] == "generator" }
-
-if generator
-  print_output("%green %yellow","[%] Meta-Generator: ","#{generator}\n\n")
-end
-
-if @options[:links]
-
-  level = @options[:links].to_i
-  print_output("%blue","\n[+] Links: ")
-  print "Crawling..." if level == 1
-  crawler = Crawler.new(@baseurl,html)
-  crawler.run(level)
-  puts "#{reset}"
-  crawler.print_links @ofile
-
-  print_output("%blue","\n[+] Dirs: ")
-  puts
-end
-
-pbar = ProgressBar.new("Fuzzing", 100, out=$stdout) if $stdout.isatty # Setup our progress bar
-pcount = 0
-
-def redir_do(location,output)
-
-  if location.start_with? "http://"
-    relative = false
-  else
-    relative = true
-  end
-
-  orig_loc = location.sub("http://","")
-  location = location.gsub(" ","")
-  location = location.split("/")
-  host = location[2]
-
-  if location[3] == nil
-    lpath = "/"
-  else
-    lpath = "/" + location[3]
-  end
-
-  if relative
-    host = @baseurl
-    if location[1] == nil
-      lpath = @options[:path] + location[0]
-    else
-      lpath = "/" + location[1]
-    end
-  end
-
-  fredirect = Http.get(host,@ip,lpath,"")  # Send request to find out more about the redirect...
-
-  print "#{@reset}" if $stdout.isatty
-  print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
-
-end
-
-
-for url in lines do   # For each line in our dictionary...
-
-  threads.enqueue_b(url) do |url|   # Start thread block
-  req = url.chomp
-  path = @options[:path] + req + ext      # Add together the start path, the dir/file to test and the extension
-
-  get = Http.get(@baseurl,@ip,path,headers)  if @options[:get] == true  # Send a get request (default)
-  get = Http.head(@baseurl,@ip,path,headers) if @options[:get] == false # Send a head request
-  code = Code.new(get)
-
-  path.chomp!
-  path.chop! if path =~ /\/$/ # Remove ending slash if there is one
-
-  extra = "  - Len: " + get.len.to_s if code.ok
-  extra = "  - Dir. Index" if get.body.include?("Index of #{path}") and code.ok
-  extra = "  - Dir. Index" if get.len == nil and code.ok and @options[:get] == false
-  extra = "" if extra == nil
-
-  output = ["%yellow" + " " * (16 - req.length) + "  => " + code.name + extra, path]
-
-  pcount += 1
-  pbar.inc if pcount % 37 == 0 if $stdout.isatty
-
-  if (code.redirect?)    # Check if we got a redirect
-    if @options[:redir] == 0
-      redir_do(get.headers['Location'],output)
-    end
-  elsif (code.found_something?)    # Check if we found something and print output
-    next if code.ignore? @options[:redir]
-    print "#{reset}" if $stdout.isatty
-    print_output(output[0],output[1])
-  end
-
-end  # end thread block
-
-
-end
-
-threads.join  # wait for threads to end
-
-print_output("%green","\n\n[+] Fuzzing done! It took a total of %0.1f seconds.\n" % [Time.now - beginning])
-

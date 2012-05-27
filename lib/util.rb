@@ -3,6 +3,14 @@
 
 module Util
 
+  cr = "\r"
+  clear = "\e[0K"
+  RESET = cr + clear
+
+  def clear_line
+    puts RESET if $stdout.isatty
+  end
+
   class Code
     def initialize(get)
       @code = get.code

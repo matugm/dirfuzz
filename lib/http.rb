@@ -55,7 +55,7 @@ class Http
       timeout 10 do
         host = port_split(host)[0]
         ip = Resolv.getaddress(host)
-        nxredir(ip)
+        # nxredir(ip)
         return ip
       end
     rescue
