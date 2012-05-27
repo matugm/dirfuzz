@@ -8,7 +8,7 @@ module Util
   RESET = cr + clear
 
   def clear_line
-    puts RESET if $stdout.isatty
+    print RESET if $stdout.isatty
   end
 
   class Code

@@ -113,11 +113,6 @@ opts.banner = banner
     end
   end
 
-  #@options[:get] = false
-  #opts.on( '-g', '--get', 'Use GET method (Default: HEAD)' ) do
-     #@options[:get] = true
-  #end          # TODO: think new help text and flag to set head, get is default now
-
   @options[:threads] = 6
    opts.on( '-t', '--threads num_threads', 'Set the number of threads (Default: 6)' ) do |num_threads|
      @options[:threads] = num_threads

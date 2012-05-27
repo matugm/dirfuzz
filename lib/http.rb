@@ -125,7 +125,7 @@ class Http
       res << data
     end
     sc.close
-    obj = Response.new(res.join(''))
+    obj = Response.new(res.join)
 
     return obj   # Return a response object
   end
