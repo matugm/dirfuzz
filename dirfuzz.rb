@@ -151,12 +151,6 @@ else
   @options[:nocolors] = 0
 end
 
-if @options[:get]
-  head = 0
-else
-  head = 1
-end
-
 if @options[:file]
   @env[:ofile] = File.open(@options[:file],'w+')
 end
@@ -174,6 +168,7 @@ threads = @options[:threads].to_i
 @env[:thread_queue] = WorkQueue.new(threads,threads*2) # Setup thread queue
 
 trap("INT") do   # Capture Ctrl-C
+  @options[:file] = nil
   print_output("%red","\n[-] Stoped by user request...")
   exit 1
 end
@@ -181,6 +176,7 @@ end
 
 @options[:host_list].each do |host|
   @env[:baseurl] = host.chomp
+  next if @env[:baseurl] == ""
   fuzzer = Dirfuzz.new(@options,@env)
   fuzzer.run
   sleep 1

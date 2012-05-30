@@ -61,7 +61,7 @@ class Dirfuzz
       puts "[-] Connection refused - the host or service is not available.\n\n"
       exit
     rescue Exception => e
-      puts "[Error] " + e.message
+      puts "[-] Error -> " + e.message
       puts e.backtrace
       exit
     end
@@ -145,6 +145,6 @@ class Dirfuzz
     @threads.join  # wait for threads to end
 
     clear_line()
-    print_output("\n\n%green","[+] Fuzzing done! It took a total of %0.1f seconds.\n" % [Time.now - beginning])
+    print_output("\n\n%green\n\n","[+] Fuzzing done! It took a total of %0.1f seconds." % [Time.now - beginning])
     end
 end
