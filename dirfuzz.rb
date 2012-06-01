@@ -175,7 +175,7 @@ end
 
 
 @options[:host_list].each do |host|
-  @env[:baseurl] = host.chomp
+  @env[:baseurl] = host.chomp.strip
   next if @env[:baseurl] == ""
   fuzzer = Dirfuzz.new(@options,@env)
   fuzzer.run
