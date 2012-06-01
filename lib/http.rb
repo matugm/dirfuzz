@@ -115,7 +115,7 @@ class Http
 
   def self.send_request (ip, port, buff)
     # TO DO: Add proxy support
-    sc = timeout 5 do     # Throw an exception Timeout::Error if we can't connect in 5 seconds
+    sc = timeout 5 do     # Throws an exception Timeout::Error if we can't connect in 5 seconds
       connection(ip, port)
     end
     sc.write(buff)
