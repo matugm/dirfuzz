@@ -11,38 +11,38 @@ class Dirfuzz
 
   def redir_do(location,output)
 
-      if location.start_with? "http://"
-        relative = false
-      else
-        relative = true
-      end
-
-      orig_loc = location.sub("http://","")
-      location = location.gsub(" ","")
-      location = location.split("/")
-      host = location[2]
-
-      if location[3] == nil
-        lpath = "/"
-      else
-        lpath = "/" + location[3]
-      end
-
-      if relative
-        host = @baseurl
-        if location[1] == nil
-          lpath = @options[:path] + location[0]
-        else
-          lpath = "/" + location[1]
-        end
-      end
-
-      fredirect = Http.get(host,@ip,lpath,"")  # Send request to find out more about the redirect...
-
-      clear_line()
-      print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
-
+    if location.start_with? "http://"
+      relative = false
+    else
+      relative = true
     end
+
+    orig_loc = location.sub("http://","")
+    location = location.gsub(" ","")
+    location = location.split("/")
+    host = location[2]
+
+    if location[3] == nil
+      lpath = "/"
+    else
+      lpath = "/" + location[3]
+    end
+
+    if relative
+      host = @baseurl
+      if location[1] == nil
+        lpath = @options[:path] + location[0]
+      else
+        lpath = "/" + location[1]
+      end
+    end
+
+    fredirect = Http.get(host,@ip,lpath,"")  # Send request to find out more about the redirect...
+
+    clear_line()
+    print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
+
+  end
 
   def run
     beginning = Time.now
