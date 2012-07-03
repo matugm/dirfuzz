@@ -42,10 +42,17 @@ class Dirfuzz
     clear_line()
     print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
 
+    code = output[0].scan(/\d{3} \w+/).first
+    return [output[1], "#{code}  [ -> #{orig_loc} #{fredirect.code.to_s} ]"]
   end
 
   def run
     beginning = Time.now
+
+    host = {}
+    host['url'] = @baseurl
+    host['dirs'] = []
+
 
     puts "\e[H\e[2J" if $stdout.isatty  # Clear the screen
 
@@ -66,8 +73,9 @@ class Dirfuzz
       exit
     end
 
-    print_output("%green %yellow","[+] Server:","#{get.headers['Server']}\n\n")
+    host['server'] = get.headers['Server']
 
+    print_output("%green %yellow","[+] Server:","#{get.headers['Server']}\n\n")
 
     if (get.code == 301 or get.code == 302)
       if get.headers['Location'].include? "https://"
@@ -87,6 +95,14 @@ class Dirfuzz
 
     if generator
       print_output("%green %yellow","[%] Meta-Generator: ","#{generator}\n\n")
+    end
+
+    title = html.xpath("//title")
+
+    if title.any?
+      host['title'] = title.first.text
+    else
+      host['title'] = ""
     end
 
     if @options[:links]
@@ -132,12 +148,13 @@ class Dirfuzz
 
       if (code.redirect?)    # Check if we got a redirect
         if @options[:redir] == 0
-          redir_do(get.headers['Location'],output)
+          host['dirs'] << redir_do(get.headers['Location'],output)
         end
       elsif (code.found_something?)    # Check if we found something and print output
         next if code.ignore? @options[:redir]
         clear_line()
         print_output(output[0],output[1])
+        host['dirs'] << [path, code.name, extra]
       end
     end  # end thread block
   end
@@ -145,6 +162,11 @@ class Dirfuzz
     @threads.join  # wait for threads to end
 
     clear_line()
-    print_output("\n\n%green\n\n","[+] Fuzzing done! It took a total of %0.1f seconds." % [Time.now - beginning])
+    time = "%0.1f" % [Time.now - beginning]
+    print_output("\n\n%green\n\n","[+] Fuzzing done! It took a total of #{time} seconds.")
+
+    host['found'] = host['dirs'].size
+    host['time'] = time.to_f
+    return host
     end
 end

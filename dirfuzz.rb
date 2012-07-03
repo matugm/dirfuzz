@@ -24,6 +24,7 @@ require 'lib/http'
 require 'lib/progressbar'
 require 'lib/util'
 require 'lib/crawl'
+require 'lib/report'
 
 require 'rubygems'
 require 'term/ansicolor'
@@ -173,11 +174,22 @@ trap("INT") do   # Capture Ctrl-C
   exit 1
 end
 
+data = []
+summary = {}
+summary['date'] = Time.now
+summary['finished'] = 0
+summary['host_count'] = @options[:host_list].size
 
 @options[:host_list].each do |host|
   @env[:baseurl] = host.chomp.strip
   next if @env[:baseurl] == ""
   fuzzer = Dirfuzz.new(@options,@env)
-  fuzzer.run
+  data << fuzzer.run
+  summary['finished'] += data.last['time']
   sleep 1
 end
+
+summary['finished'] = "%0.1f" % [summary['finished']]
+
+r = Report.new
+File.open("/tmp/report.html","w") { |file| file.puts r.generate(data,summary) }

@@ -422,6 +422,7 @@ anvils
 anything
 ap
 apache
+apex
 api
 aplicacion
 apollo
@@ -1836,6 +1837,7 @@ isaac
 isabelle
 isis
 island
+isqlplus
 issues
 it
 italia

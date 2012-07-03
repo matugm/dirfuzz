@@ -1,0 +1,24 @@
+<div class="bloc">
+	<div class="header">
+	<%= host['url'] %>
+	</div>
+	<div class ="data">
+	<p>
+	<ul>
+		<li><div class="label">Title:</div> <%= host['title'] %></li>
+		<li><div class="label">Server:</div> <%= host['server'] %></li>
+		<li><div class="label">Dirs found:</div> <%= host['found'] %></li>
+		<br>
+
+		<div class="dirs">
+		<% host['dirs'].each do |dir| %>
+			<li><div class="label"><%= dir[0] %></div><%= dir[1] %> <%= dir[2] %></li>
+		<% end %>
+		</div>
+
+	</ul>
+	</p>
+	</div>
+</div>
+<br>
+<br>
