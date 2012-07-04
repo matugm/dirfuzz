@@ -1,6 +1,6 @@
 <div class="bloc">
 	<div class="header">
-	<%= host['url'] %>
+	<a href=http://<%= host['url'] %>><%= host['url']%></a>
 	</div>
 	<div class ="data">
 	<p>
@@ -9,6 +9,12 @@
 		<li><div class="label">Server:</div> <%= host['server'] %></li>
 		<li><div class="label">Dirs found:</div> <%= host['found'] %></li>
 		<br>
+		<li><div class="label">Screenshot:</div><br><br>
+
+		<% if File.exist? "/tmp/#{host['url']}.png" %>
+			<img style="height: 300; widht: 400;" src=/tmp/<%= host['url'] %>.png></li>
+			<br>
+		<% end %>
 
 		<div class="dirs">
 		<% host['dirs'].each do |dir| %>

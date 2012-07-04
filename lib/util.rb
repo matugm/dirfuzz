@@ -35,7 +35,7 @@ module Util
 
     def ignore? (ignore_code)
       return false if ignore_code.instance_of? Fixnum
-      @code == ignore_code.split(':')[1].to_i
+      ignore_code.scan(/\d+/).include? @code.to_s
     end
 
     def name

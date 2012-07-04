@@ -1,3 +1,6 @@
+
+# Report generator for Dirfuzz using Ruby HTML templating library (ERB)
+
 require "erb"
 
 $: << '.'

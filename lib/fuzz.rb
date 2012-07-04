@@ -67,15 +67,11 @@ class Dirfuzz
     rescue Errno::ECONNREFUSED
       puts "[-] Connection refused - the host or service is not available.\n\n"
       exit
-    rescue Exception => e
-      puts "[-] Error -> " + e.message
-      puts e.backtrace
-      exit
     end
 
     host['server'] = get.headers['Server']
 
-    print_output("%green %yellow","[+] Server:","#{get.headers['Server']}\n\n")
+    print_output("%green %yellow","[+] Server:","#{get.headers['Server']}")
 
     if (get.code == 301 or get.code == 302)
       if get.headers['Location'].include? "https://"
@@ -102,8 +98,24 @@ class Dirfuzz
     if title.any?
       host['title'] = title.first.text
     else
-      host['title'] = ""
+      host['title'] = "(No title)"
     end
+
+    if @options[:info_mode]
+      host['dirs'] = []
+      host['found'] = 0
+      host['time'] = 0
+      opts = "--load-error-handling ignore --width 750 --height 500"
+
+      timeout 3 do
+        `external/wkhtmltoimage-i386 #{opts} #{@baseurl} /tmp/#{@baseurl}.png 2>&1 > /dev/null`
+      end
+
+      print_output("%green %yellow","[+] Title:","#{host['title']}\n\n")
+      return host
+    end
+
+    puts ""
 
     if @options[:links]
 
@@ -122,6 +134,7 @@ class Dirfuzz
     pbar = ProgressBar.new("Fuzzing", 100, out=$stdout) if $stdout.isatty # Setup our progress bar
     pcount = 0
 
+    repeated = 0
 
     @dirs.each do |url|  # Iterate over our dictionary of words for fuzzing
 
@@ -154,6 +167,20 @@ class Dirfuzz
         next if code.ignore? @options[:redir]
         clear_line()
         print_output(output[0],output[1])
+
+      if host['dirs'].last and code.name == host['dirs'].last[1]
+        unless code.code == 200 and extra != host['dirs'].last[2]
+          repeated += 1
+          if repeated >= 6
+            @options[:redir] = "" if @options[:redir].instance_of? Fixnum
+            @options[:redir] << code.code.to_s
+            puts "Too many #{code.code} reponses in a row, ignoring...\n\n"
+          end
+        end
+      else
+        repeated = 0
+      end
+
         host['dirs'] << [path, code.name, extra]
       end
     end  # end thread block

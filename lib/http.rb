@@ -59,9 +59,7 @@ class Http
         return ip
       end
     rescue
-      puts "[-] Couldn't resolve name: #{host}\n\n"
-      puts "[-] Exiting..."
-      exit
+      raise DnsFail
     end
   end
 
@@ -143,7 +141,10 @@ class Http
 
 end
 
-class NxRedir < StandardError
+class DnsFail < StandardError
+end
+
+class InvalidHttpResponse < StandardError
 end
 
 class Response
@@ -151,6 +152,10 @@ class Response
   def initialize(res)
     @res = res
     @headers = Hash.new
+
+    if res.empty?
+      raise InvalidHttpResponse
+    end
 
     split_data
     parse_headers
@@ -165,6 +170,10 @@ class Response
     @raw_headers = b[0].split("\r")
     @raw_headers.delete_at(0)
     @body = b[1]
+
+    if @body.nil? or @body.empty?
+      raise InvalidHttpResponse
+    end
   end
 
   def parse_headers

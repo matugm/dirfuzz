@@ -171,7 +171,7 @@ threads = @options[:threads].to_i
 trap("INT") do   # Capture Ctrl-C
   @options[:file] = nil
   print_output("%red","\n[-] Stoped by user request...")
-  exit 1
+  exit! 1
 end
 
 data = []
@@ -180,11 +180,27 @@ summary['date'] = Time.now
 summary['finished'] = 0
 summary['host_count'] = @options[:host_list].size
 
+@options[:info_mode] = true
+
 @options[:host_list].each do |host|
   @env[:baseurl] = host.chomp.strip
   next if @env[:baseurl] == ""
   fuzzer = Dirfuzz.new(@options,@env)
-  data << fuzzer.run
+
+  begin
+    data << fuzzer.run
+  rescue InvalidHttpResponse
+    puts "Server responded with an invalid http packet, skipping..."
+    next
+  rescue DnsFail
+    puts "[-] Couldn't resolve name: #{@env[:baseurl]}\n\n"
+    puts "[-] Exiting..."
+    exit
+  rescue Exception => e
+    puts "[-] Error -> " + e.message
+    puts e.backtrace
+  end
+
   summary['finished'] += data.last['time']
   sleep 1
 end
@@ -193,3 +209,6 @@ summary['finished'] = "%0.1f" % [summary['finished']]
 
 r = Report.new
 File.open("/tmp/report.html","w") { |file| file.puts r.generate(data,summary) }
+
+puts
+puts "Report generated in /tmp/report.html"
