@@ -179,6 +179,16 @@ trap("INT") do   # Capture Ctrl-C
   exit! 1
 end
 
+if RUBY_PLATFORM.include? "linux"
+  report_dir = "/tmp/reports"
+else
+  report_dir = ENV['TMP'] + "\\reports"
+end
+
+unless Dir.exist? report_dir
+  Dir.mkdir(report_dir)
+end
+
 data = []
 summary = {}
 summary['date'] = Time.now
@@ -207,16 +217,32 @@ summary['host_count'] = @options[:host_list].size
 
   data.last['time'] =  data.last['time'] || 0
   summary['finished'] += data.last['time']
-  sleep 1
+  
+  opts = "--load-error-handling ignore --width 800 --height 500"
+
+  if @options[:info_mode]
+    if RUBY_PLATFORM.include? "linux"
+      bin = "wkhtmltoimage-i386"
+      null = "/dev/null"
+      extra = ""
+    else
+      bin = "wkhtmltoimage.exe"
+      null = "nul"
+      extra = "start "
+    end
+
+    begin
+    timeout 10 do
+      `#{extra}external/#{bin} #{opts} #{@env[:baseurl]} #{report_dir}/#{@env[:baseurl]}.jpg 2>&1 > #{null}`
+    end
+    rescue
+      # Ignore exception
+    end
+  end
 end
 
 summary['finished'] = "%0.1f" % [summary['finished']]
 
-report_dir = "/tmp/reports"
-
-unless Dir.exist? report_dir
-  Dir.mkdir(report_dir)
-end
 
 r = Report.new(report_dir)
 File.open(report_dir + "/report.html","w") { |file| file.puts r.generate(data,summary) }

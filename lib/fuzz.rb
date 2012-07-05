@@ -106,9 +106,15 @@ class Dirfuzz
       host['found'] = 0
       opts = "--load-error-handling ignore --width 800 --height 500"
 
+      if RUBY_PLATFORM.include? "linux"
+        bin = "wkhtmltoimage-i386"
+      else
+        bin = "wkhtmltoimage.exe"
+      end
+
       begin
       timeout 4 do
-        `external/wkhtmltoimage-i386 #{opts} #{@baseurl} /tmp/reports/#{@baseurl}.jpg 2>&1 > /dev/null`
+        `external/#{bin} #{opts} #{@baseurl} #{report_dir}/reports/#{@baseurl}.jpg 2>&1 > /dev/null`
       end
       rescue
         # Ignore exception
