@@ -104,11 +104,14 @@ class Dirfuzz
     if @options[:info_mode]
       host['dirs'] = []
       host['found'] = 0
-      host['time'] = 0
-      opts = "--load-error-handling ignore --width 750 --height 500"
+      opts = "--load-error-handling ignore --width 800 --height 500"
 
-      timeout 3 do
-        `external/wkhtmltoimage-i386 #{opts} #{@baseurl} /tmp/#{@baseurl}.png 2>&1 > /dev/null`
+      begin
+      timeout 4 do
+        `external/wkhtmltoimage-i386 #{opts} #{@baseurl} /tmp/reports/#{@baseurl}.jpg 2>&1 > /dev/null`
+      end
+      rescue
+        # Ignore exception
       end
 
       print_output("%green %yellow","[+] Title:","#{host['title']}\n\n")
@@ -168,17 +171,17 @@ class Dirfuzz
         clear_line()
         print_output(output[0],output[1])
 
-      if host['dirs'].last and code.name == host['dirs'].last[1]
-        unless code.code == 200 and extra != host['dirs'].last[2]
-          repeated += 1
-          if repeated >= 6
-            @options[:redir] = "" if @options[:redir].instance_of? Fixnum
-            @options[:redir] << code.code.to_s
-            puts "Too many #{code.code} reponses in a row, ignoring...\n\n"
+        if host['dirs'].last and code.name == host['dirs'].last[1]
+          unless code.code == 200 and extra != host['dirs'].last[2]
+            repeated += 1
+            if repeated >= 6
+              @options[:redir] = "" if @options[:redir].instance_of? Fixnum
+              @options[:redir] << code.code.to_s
+              puts "Too many #{code.code} reponses in a row, ignoring...\n\n"
+            end
           end
-        end
-      else
-        repeated = 0
+        else
+          repeated = 0
       end
 
         host['dirs'] << [path, code.name, extra]

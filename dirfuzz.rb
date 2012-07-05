@@ -124,6 +124,11 @@ opts.banner = banner
      @options[:cookie] = cookie
   end
 
+  @options[:info_mode] = false
+    opts.on( '-m','', 'Info mode: Only get basic info, don\'t fuzz.') do
+      @options[:info_mode] = true
+  end
+
   opts.on( '-h', '--help', 'Display this screen.' ) do
     puts opts
     exit
@@ -180,7 +185,6 @@ summary['date'] = Time.now
 summary['finished'] = 0
 summary['host_count'] = @options[:host_list].size
 
-@options[:info_mode] = true
 
 @options[:host_list].each do |host|
   @env[:baseurl] = host.chomp.strip
@@ -201,14 +205,21 @@ summary['host_count'] = @options[:host_list].size
     puts e.backtrace
   end
 
+  data.last['time'] =  data.last['time'] || 0
   summary['finished'] += data.last['time']
   sleep 1
 end
 
 summary['finished'] = "%0.1f" % [summary['finished']]
 
-r = Report.new
-File.open("/tmp/report.html","w") { |file| file.puts r.generate(data,summary) }
+report_dir = "/tmp/reports"
+
+unless Dir.exist? report_dir
+  Dir.mkdir(report_dir)
+end
+
+r = Report.new(report_dir)
+File.open(report_dir + "/report.html","w") { |file| file.puts r.generate(data,summary) }
 
 puts
-puts "Report generated in /tmp/report.html"
+puts "Report generated in #{report_dir}/report.html"

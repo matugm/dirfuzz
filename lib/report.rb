@@ -3,10 +3,10 @@
 
 require "erb"
 
-$: << '.'
-
 class Report
-	def initialize
+	def initialize(report_dir)
+
+		@report_dir = report_dir
 
 		file = File.open("data/report.css", "r") { |file| file.readlines }
 		@css = ERB.new(file.join)

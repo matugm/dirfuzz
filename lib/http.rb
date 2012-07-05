@@ -122,6 +122,8 @@ class Http
     while data = sc.read(2048)   # Read all data from the socket
       res << data
     end
+    # p "Data received. Len: #{res.join.size}"
+
     sc.close
     obj = Response.new(res.join)
 
