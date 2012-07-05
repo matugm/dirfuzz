@@ -243,9 +243,10 @@ end
 
 summary['finished'] = "%0.1f" % [summary['finished']]
 
+if @options[:info_mode]
+  r = Report.new(report_dir)
+  File.open(report_dir + "/report.html","w") { |file| file.puts r.generate(data,summary) }
 
-r = Report.new(report_dir)
-File.open(report_dir + "/report.html","w") { |file| file.puts r.generate(data,summary) }
-
-puts
-puts "Report generated in #{report_dir}/report.html"
+  puts
+  puts "Report generated in #{report_dir}/report.html"
+end
