@@ -233,10 +233,12 @@ summary['host_count'] = @options[:host_list].size
 
     begin
     timeout 10 do
+      pid = fork {
       `#{extra}external/#{bin} #{opts} #{@env[:baseurl]} #{report_dir}/#{@env[:baseurl]}.jpg 2>&1 > #{null}`
+      }
     end
     rescue
-      # Ignore exception
+      Process.kill('SIGKILL', pid)
     end
   end
 end
