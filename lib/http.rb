@@ -117,9 +117,9 @@ class Http
       connection(ip, port)
     end
     sc.write(buff)
-    sc.sync = true
+    sc.sync = false
     res = []
-    while data = sc.read(2048)   # Read all data from the socket
+    while data = sc.read(1024 * 4)   # Read data from the socket
       res << data
     end
     # p "Data received. Len: #{res.join.size}"
