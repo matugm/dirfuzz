@@ -124,10 +124,10 @@ opts.banner = banner
      @options[:cookie] = cookie
   end
 
-  @options[:info_mode] = false
-    opts.on( '-m','', 'Info mode: Only get basic info, don\'t fuzz.') do
-      @options[:info_mode] = true
-  end
+  # @options[:info_mode] = false
+  #   opts.on( '-m','', 'Info mode: Only get basic info, don\'t fuzz.') do
+  #     @options[:info_mode] = true
+  # end
 
   opts.on( '-h', '--help', 'Display this screen.' ) do
     puts opts
