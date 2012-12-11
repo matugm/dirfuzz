@@ -219,28 +219,6 @@ summary['host_count'] = @options[:host_list].size
   summary['finished'] += data.last['time']
   
   opts = "--load-error-handling ignore --width 800 --height 500"
-
-  if @options[:info_mode]
-    if RUBY_PLATFORM.include? "linux"
-      bin = "wkhtmltoimage-i386"
-      null = "/dev/null"
-      extra = ""
-    else
-      bin = "wkhtmltoimage.exe"
-      null = "nul"
-      extra = "start "
-    end
-
-    begin
-    timeout 10 do
-      pid = fork {
-      `#{extra}external/#{bin} #{opts} #{@env[:baseurl]} #{report_dir}/#{@env[:baseurl]}.jpg 2>&1 > #{null}`
-      }
-    end
-    rescue
-      Process.kill('SIGKILL', pid)
-    end
-  end
 end
 
 summary['finished'] = "%0.1f" % [summary['finished']]
