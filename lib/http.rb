@@ -173,7 +173,7 @@ class Response
     @raw_headers.delete_at(0)
     @body = b[1]
 
-    if @body.nil? or @body.empty?
+    if @body.nil? or @res[0] !~ /HTTP/i
       raise InvalidHttpResponse
     end
   end
