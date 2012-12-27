@@ -159,7 +159,7 @@ class Dirfuzz
         clear_line()
         print_output(output[0],output[1])
 
-        if host['dirs'].last and code.name == host['dirs'].last[1]
+        if host['dirs'].any? and code.name == host['dirs'].last[1]
           unless code.code == 200 and extra != host['dirs'].last[2]
             repeated += 1
             if repeated >= 6
@@ -170,10 +170,10 @@ class Dirfuzz
           end
         else
           repeated = 0
+        end
+          host['dirs'] << [path, code.name, extra]
       end
-
-        host['dirs'] << [path, code.name, extra]
-      end
+        repeated = 0 if code.code == 404  # Reset counter if dir not found.
     end  # end thread block
   end
 
