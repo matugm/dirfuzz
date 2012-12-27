@@ -102,24 +102,6 @@ class Dirfuzz
     end
 
     if @options[:info_mode]
-      host['dirs'] = []
-      host['found'] = 0
-      opts = "--load-error-handling ignore --width 800 --height 500"
-
-      if RUBY_PLATFORM.include? "linux"
-        bin = "wkhtmltoimage-i386"
-      else
-        bin = "wkhtmltoimage.exe"
-      end
-
-      begin
-      timeout 4 do
-        `external/#{bin} #{opts} #{@baseurl} #{report_dir}/reports/#{@baseurl}.jpg 2>&1 > /dev/null`
-      end
-      rescue
-        # Ignore exception
-      end
-
       print_output("%green %yellow","[+] Title:","#{host['title']}\n\n")
       return host
     end
