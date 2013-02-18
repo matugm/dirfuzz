@@ -63,10 +63,10 @@ class Dirfuzz
       get = Http.get(@baseurl,@ip,@options[:path],@options[:headers])
     rescue Timeout::Error
       puts "[-] Connection timed out - the host isn't responding.\n\n"
-      exit
+      exit!
     rescue Errno::ECONNREFUSED
       puts "[-] Connection refused - the host or service is not available.\n\n"
-      exit
+      exit!
     end
 
     host['server'] = get.headers['Server']
@@ -149,6 +149,7 @@ class Dirfuzz
 
       pcount += 1
       pbar.inc if pcount % 37 == 0 if $stdout.isatty
+
 
       if (code.redirect?)    # Check if we got a redirect
         if @options[:redir] == 0
