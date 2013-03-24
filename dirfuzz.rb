@@ -218,7 +218,6 @@ summary['host_count'] = @options[:host_list].size
   data.last['time'] =  data.last['time'] || 0
   summary['finished'] += data.last['time']
   
-  opts = "--load-error-handling ignore --width 800 --height 500"
 end
 
 summary['finished'] = "%0.1f" % [summary['finished']]
