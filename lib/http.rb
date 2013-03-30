@@ -118,14 +118,14 @@ class Http
     end
     sc.write(buff)
     sc.sync = false
-    res = []
+    raw_data = []
     while data = sc.read(1024 * 4)   # Read data from the socket
-      res << data
+      raw_data << data
     end
-    # p "Data received. Len: #{res.join.size}"
+    # p "Data received. Len: #{raw_data.join.size}"
 
     sc.close
-    obj = Response.new(res.join)
+    obj = Response.new(raw_data.join)
 
     return obj   # Return a response object
   end
@@ -151,11 +151,11 @@ end
 
 class Response
 
-  def initialize(res)
-    @res = res
+  def initialize(raw_data)
+    @raw_data = raw_data
     @headers = Hash.new
 
-    if res.empty?
+    if raw_data.empty?
       raise InvalidHttpResponse
     end
 
@@ -167,20 +167,21 @@ class Response
   end
 
   def split_data
-    b = res.split("\r\n\r\n",2)
-    @res = res.split("\r")
-    @raw_headers = b[0].split("\r")
-    @raw_headers.delete_at(0)
-    @body = b[1]
+    @raw_headers, @body = raw_data.split("\r\n\r\n",2)
 
-    if @body.nil? or @res[0] !~ /HTTP/i
+    @raw_headers = @raw_headers.split("\r")
+    @raw_headers.delete_at(0)
+
+    @raw_data = raw_data.split("\r")
+
+    if @body.nil? or @raw_data[0] !~ /HTTP/i
       raise InvalidHttpResponse
     end
   end
 
   def parse_headers
-    for i in @raw_headers    # Parse headers into a hash
-      temp = i.split(/:/, 2)
+    for header in @raw_headers    # Parse headers into a hash
+      temp = header.split(/:/, 2)
       temp[0] = temp[0].sub("\n","")
       @headers["#{temp[0]}"] = temp[1].lstrip
     end
@@ -219,13 +220,12 @@ class Response
   end
 
   def set_code
-    code = res[0].split(" ")
+    code = raw_data[0].split(" ")
     @code = code[1].to_i
-    name = res[0]
+    name = raw_data[0]
     @code_with_name = name[9,(name.length-9)]
   end
 
-  attr_reader :code, :code_with_name, :body, :headers, :len, :res
+  attr_reader :code, :code_with_name, :body, :headers, :len, :raw_data
 
 end
-
