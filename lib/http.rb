@@ -149,83 +149,94 @@ end
 class InvalidHttpResponse < StandardError
 end
 
+
 class Response
 
   def initialize(raw_data)
-    @raw_data = raw_data
-    @headers = Hash.new
 
     if raw_data.empty?
       raise InvalidHttpResponse
     end
 
-    split_data
-    parse_headers
-    set_size
-    check_encoding
-    set_code
+    raw_headers, body = parse_data(raw_data)
+    @code, @code_with_name = parse_code(raw_data)
+    @headers = parse_headers(raw_headers)
+    @body = decode_data(body)
+    @len = get_size(body)
   end
 
-  def split_data
-    @raw_headers, @body = raw_data.split("\r\n\r\n",2)
+  def parse_data(raw_data)
+    raw_headers, body = raw_data.split("\r\n\r\n",2)
 
-    @raw_headers = @raw_headers.split("\r")
-    @raw_headers.delete_at(0)
+    raw_headers = raw_headers.split("\r")
+    raw_headers.delete_at(0)
 
-    @raw_data = raw_data.split("\r")
-
-    if @body.nil? or @raw_data[0] !~ /HTTP/i
+    if body.nil? or !raw_data.start_with? "HTTP"
       raise InvalidHttpResponse
     end
+
+    return raw_headers, body
   end
 
-  def parse_headers
-    for header in @raw_headers    # Parse headers into a hash
+  def parse_headers(raw_headers)
+    headers = Hash.new
+
+    for header in raw_headers    # Parse headers into a hash
       temp = header.split(/:/, 2)
       temp[0] = temp[0].sub("\n","")
-      @headers["#{temp[0]}"] = temp[1].lstrip
+      headers["#{temp[0]}"] = temp[1].lstrip
     end
+
+    return headers
   end
 
-  def set_size
+  def get_size(body)
     if headers["Content-Length"]
-      @len = headers["Content-Length"]
+      len = headers["Content-Length"]
     else
-      @len = @body.length
+      len = body.length
     end
   end
 
-  def check_encoding
+  def decode_data(body)
     if headers["Transfer-Encoding"] == "chunked"
-      decode_chunked
+      data = decode_chunked(body)
     end
 
-    if headers["Content-Encoding"] == "gzip" and @body.length > 0
-      @body = Zlib::GzipReader.new(StringIO.new(@body)).read
-      @len = @body.length
+    data = data || body
+
+    if headers["Content-Encoding"] == "gzip" and body.length > 0
+      data = Zlib::GzipReader.new(StringIO.new(data)).read
     end
+
+    return data
    end
 
-  def decode_chunked
+  def decode_chunked(body)
     puntero = 0
     tmp_buffer = ""
-    while (size = @body[puntero..@body.length].scan(/^[0-9a-f]+\r\n/)[0]) != "0\r\n"
+
+    while (size = body[puntero..body.length].scan(/^[0-9a-f]+\r\n/)[0]) != "0\r\n"
       size_decimal = size.to_i(16)
       puntero += size.length
-      tmp_buffer += @body[puntero..puntero+size_decimal-1]
+      tmp_buffer += body[puntero..puntero+size_decimal-1]
       puntero += size_decimal+2
     end
-    @body = tmp_buffer
-    @len = @body.length
+    @len = body.length
+
+    return tmp_buffer
   end
 
-  def set_code
+  def parse_code(raw_data)
+    raw_data = raw_data.split("\r")
     code = raw_data[0].split(" ")
-    @code = code[1].to_i
+    code = code[1].to_i
     name = raw_data[0]
-    @code_with_name = name[9,(name.length-9)]
+    code_with_name = name[9,(name.length-9)]
+
+    return code, code_with_name
   end
 
-  attr_reader :code, :code_with_name, :body, :headers, :len, :raw_data
+  attr_reader :code, :code_with_name, :body, :headers, :len
 
 end
