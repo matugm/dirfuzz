@@ -134,10 +134,10 @@ class Crawler
       @abs_links.sort.uniq { |link| link[/.*\?(?:\w+=)(?=\d+)|[\w\/.-]+/] }
     when "relative"
       @rel_links = @rel_links.sort.uniq { |link| link[/.*\/?(?:[\w_-]+)/] }
-      @rel_links.map { |e| e.gsub(/^\/\w+\/\w+/) { |link| " "*4 + link  } }
+      @rel_links.map { |e| e.gsub(/^\/[\w_-]+\/\w+/) { |link| " " * 4 + link  } }
     when "mail"
       @mail_links = @mail_links.find_all { |m| m =~ /@/ }  # Avoid incorrectly formated mailto links
-      @mail_links  = @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }
+      @mail_links = @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }
       @mail_links.uniq.map { |m| m.sub('mailto:','') }
     when "robots"
       Http.open(@host + '/robots.txt').body.scan(/Disallow: (.*)/).sort.uniq
