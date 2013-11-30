@@ -108,6 +108,7 @@ class Dirfuzz
 
     puts "" unless @options[:multi]
 
+    # Crawl site if the user requested it
     if @options[:links]
 
       level = @options[:links].to_i
@@ -116,7 +117,7 @@ class Dirfuzz
       crawler = Crawler.new(@baseurl,html)
       crawler.run(level)
       clear_line()
-      crawler.print_links @ofile
+      out = crawler.print_links @ofile
 
       print_output("%blue","\n[+] Dirs: ")
       puts
@@ -126,11 +127,11 @@ class Dirfuzz
       pbar = ProgressBar.new("Fuzzing", 100, out=$stdout) # Setup our progress bar
     end
 
-    pcount = 0
+    pcount   = 0
     repeated = 0
     progress = 0
 
-    threads = @options[:threads].to_i
+    threads  = @options[:threads].to_i
     @threads = WorkQueue.new(threads,threads * 2) # Setup thread queue
 
     @dirs.each do |url|  # Iterate over our dictionary of words for fuzzing
@@ -153,10 +154,9 @@ class Dirfuzz
 
       output = ["%yellow" + " " * (16 - req.length) + "  => " + code.name + extra, path]
 
-
       # Update progress
       pcount += 1
-      
+
       if pcount % 37 == 0 
         if @options[:multi]
           progress += 1

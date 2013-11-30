@@ -190,7 +190,7 @@ unless Dir.exist? report_dir
   Dir.mkdir(report_dir)
 end
 
-def fuzz_host(host, mutex)
+def fuzz_host(host, mutex = Mutex.new)
   data = []
   @env[:baseurl] = host.chomp.strip
   return if @env[:baseurl] == ""
@@ -230,7 +230,7 @@ summary['host_count'] = @options[:host_list].size
 total_host = @options[:host_list].size
 
 if total_host > 1
-  host_queque = WorkQueue.new(5, 20)
+  host_queque = WorkQueue.new(10, 20)
   @options[:multi] = true
   mutex = Mutex.new
 
@@ -247,6 +247,7 @@ if total_host > 1
 
   host_queque.join
 else
+  host = @options[:host_list].first
   fuzz_host(host) 
 end
 
