@@ -87,7 +87,7 @@ class Http
     buff += "#{path} HTTP/1.1\r\n"
     buff += "Host: #{host}\r\n"
     buff += "Connection: close\r\n"
-    buff += "Accept-Encoding: identity; q=1, gzip; q=0.5\r\n"  # Prefer no encoding over gzip...
+    buff += "Accept-Encoding: gzip;q=1.0, deflate;q=0.6, identity;q=0.3\r\n"  # Prefer no encoding over gzip...
 
     if headers != ""
       headers.each do |header|
@@ -113,21 +113,21 @@ class Http
 
   def self.send_request (ip, port, buff)
     # TO DO: Add proxy support
-    sc = timeout 5 do     # Throws an exception Timeout::Error if we can't connect in 5 seconds
-      connection(ip, port)
-    end
-    sc.write(buff)
-    sc.sync = false
-    raw_data = []
-    while data = sc.read(1024 * 4)   # Read data from the socket
-      raw_data << data
-    end
-    # p "Data received. Len: #{raw_data.join.size}"
+    timeout 10 do     # Throws an exception Timeout::Error if we can't connect in 5 seconds
+      sc = connection(ip, port)
 
-    sc.close
-    obj = Response.new(raw_data.join)
+      sc.write(buff)
+      sc.sync = false
+      raw_data = []
 
-    return obj   # Return a response object
+      while data = sc.read(1024 * 4)   # Read data from the socket
+        raw_data << data
+      end
+
+      sc.close
+      obj = Response.new(raw_data.join)
+    end
+
   end
 
   def self.connection(ip,port)
@@ -205,7 +205,13 @@ class Response
 
     data = data || body
 
-    if headers["Content-Encoding"] == "gzip" and body.length > 0
+    return if body.length <= 0
+
+    if headers["Content-Encoding"] == "deflate"
+      data = Zlib::Inflate.inflate(data)
+    end
+
+    if headers["Content-Encoding"] == "gzip"
       data = Zlib::GzipReader.new(StringIO.new(data)).read
     end
 

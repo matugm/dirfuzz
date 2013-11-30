@@ -39,7 +39,7 @@ class Dirfuzz
 
     fredirect = Http.get(host,@ip,lpath,"")  # Send request to find out more about the redirect...
 
-    clear_line()
+    clear_line() unless @options[:multi]
     print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
 
     code = output[0].scan(/\d{3} \w+/).first
@@ -53,20 +53,20 @@ class Dirfuzz
     host['url'] = @baseurl
     host['dirs'] = []
 
-
-    puts "\e[H\e[2J" if $stdout.isatty  # Clear the screen
+    #puts "\e[H\e[2J" if $stdout.isatty  # Clear the screen
 
     @ip = Http.resolv(@baseurl) # Resolve name or just return the ip
     print_output("%green %yellow","[+] Starting fuzz for:",@baseurl)
+    puts "[ multi-scan ] Starting for: #{@baseurl}" if @options[:multi]
 
     begin
       get = Http.get(@baseurl,@ip,@options[:path],@options[:headers])
     rescue Timeout::Error
       puts "[-] Connection timed out - the host isn't responding.\n\n"
-      exit!
+      return
     rescue Errno::ECONNREFUSED
       puts "[-] Connection refused - the host or service is not available.\n\n"
-      exit!
+      return
     end
 
     host['server'] = get.headers['Server']
@@ -106,7 +106,7 @@ class Dirfuzz
       return host
     end
 
-    puts ""
+    puts "" unless @options[:multi]
 
     if @options[:links]
 
@@ -122,10 +122,16 @@ class Dirfuzz
       puts
     end
 
-    pbar = ProgressBar.new("Fuzzing", 100, out=$stdout) if $stdout.isatty # Setup our progress bar
-    pcount = 0
+    if $stdout.isatty  and !@options[:multi]
+      pbar = ProgressBar.new("Fuzzing", 100, out=$stdout) # Setup our progress bar
+    end
 
+    pcount = 0
     repeated = 0
+    progress = 0
+
+    threads = @options[:threads].to_i
+    @threads = WorkQueue.new(threads,threads * 2) # Setup thread queue
 
     @dirs.each do |url|  # Iterate over our dictionary of words for fuzzing
 
@@ -147,9 +153,21 @@ class Dirfuzz
 
       output = ["%yellow" + " " * (16 - req.length) + "  => " + code.name + extra, path]
 
-      pcount += 1
-      pbar.inc if pcount % 37 == 0 if $stdout.isatty
 
+      # Update progress
+      pcount += 1
+      
+      if pcount % 37 == 0 
+        if @options[:multi]
+          progress += 1
+          if progress % 10 == 0
+            puts "[ update ] #{@baseurl} -> #{progress}%"
+          end
+
+        elsif $stdout.isatty
+          pbar.inc
+        end
+      end
 
       if (code.redirect?)    # Check if we got a redirect
         if @options[:redir] == 0
@@ -166,7 +184,7 @@ class Dirfuzz
             if repeated >= 6
               @options[:redir] = "" if @options[:redir].instance_of? Fixnum
               @options[:redir] << code.code.to_s
-              puts "Too many #{code.code} reponses in a row, ignoring...\n\n"
+              puts "Too many #{code.code} reponses in a row, ignoring...\n\n" unless @options[:multi]
             end
           end
         else

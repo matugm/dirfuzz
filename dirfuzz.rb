@@ -30,6 +30,7 @@ require 'rubygems'
 require 'term/ansicolor'
 require 'work_queue'
 require 'optparse'
+require 'json'
 
 include Util
 
@@ -189,36 +190,66 @@ unless Dir.exist? report_dir
   Dir.mkdir(report_dir)
 end
 
-data = []
-summary = {}
-summary['date'] = Time.now
-summary['finished'] = 0
-summary['host_count'] = @options[:host_list].size
-
-
-@options[:host_list].each do |host|
+def fuzz_host(host, mutex)
+  data = []
   @env[:baseurl] = host.chomp.strip
-  next if @env[:baseurl] == ""
-  fuzzer = Dirfuzz.new(@options,@env)
+  return if @env[:baseurl] == ""
+  fuzzer = Dirfuzz.new(@options, @env)
 
   begin
     data << fuzzer.run
   rescue InvalidHttpResponse
     puts "Server responded with an invalid http packet, skipping..."
-    next
+    return
   rescue DnsFail
     puts "[-] Couldn't resolve name: #{@env[:baseurl]}\n\n"
-    puts "[-] Exiting..."
-    exit
+    return
   rescue Exception => e
     puts "[-] Error -> " + e.message
-    puts e.backtrace
+    # puts e.backtrace
   end
 
-  data.last['time'] =  data.last['time'] || 0
-  summary['finished'] += data.last['time']
+  # data.last['time'] =  data.last['time'] || 0
+  # summary['finished'] += data.last['time']
   
+  # Save data if we got sane results
+
+  dircount = data[0]["dirs"].size
+  if dircount < 100
+    mutex.synchronize {
+      File.open("log.json", "a+") { |file| file.puts data.to_json }
+    }
+  end
 end
+
+summary = {}
+summary['date'] = Time.now
+summary['finished'] = 0
+summary['host_count'] = @options[:host_list].size
+
+total_host = @options[:host_list].size
+
+if total_host > 1
+  host_queque = WorkQueue.new(5, 20)
+  @options[:multi] = true
+  mutex = Mutex.new
+
+  puts "Starting multi-scan [ #{total_host} host ]"
+  puts
+
+  @options[:host_list].each do |host|
+    host_queque.enqueue_b(host, mutex) do |host, mutex|
+      fuzz_host(host, mutex)
+      total_host -= 1
+      puts "[ multi-scan ] Scan finished for #{host.chomp} [ #{total_host} host left ]"
+    end
+  end
+
+  host_queque.join
+else
+  fuzz_host(host) 
+end
+
 
 summary['finished'] = "%0.1f" % [summary['finished']]
 

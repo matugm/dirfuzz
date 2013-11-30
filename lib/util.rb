@@ -47,6 +47,8 @@ module Util
 
   def print_output (msg,*colored_words)
 
+    return if @options[:multi]
+
     coloring = OutputColor.new(colored_words, @options[:nocolors])
 
     msg.split.each do |word|
