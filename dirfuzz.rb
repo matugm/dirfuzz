@@ -180,15 +180,6 @@ trap("INT") do   # Capture Ctrl-C
   exit! 1
 end
 
-if RUBY_PLATFORM.include? "linux"
-  report_dir = "/tmp/reports"
-else
-  report_dir = ENV['TMP'] + "\\reports"
-end
-
-unless Dir.exist? report_dir
-  Dir.mkdir(report_dir)
-end
 
 def fuzz_host(host, mutex = Mutex.new)
   data = []
@@ -230,7 +221,7 @@ summary['host_count'] = @options[:host_list].size
 total_host = @options[:host_list].size
 
 if total_host > 1
-  host_queque = WorkQueue.new(10, 20)
+  host_queque = WorkQueue.new(5, 20)
   @options[:multi] = true
   mutex = Mutex.new
 
