@@ -17,12 +17,13 @@ class Http
   end
 # Simple method for a quick GET request
   def self.open (host)
-    method = "get"
+    method = "get"   
     host.sub!("http://",'')
     host, path = host.split("/",2)
-    ip = resolv(host)
     path = "" if path == nil
     path = "/" + path
+    
+    ip = resolv(host)
     request(host,ip,path,method)
   end
 
