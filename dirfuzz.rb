@@ -200,9 +200,6 @@ def fuzz_host(host, mutex = Mutex.new)
     # puts e.backtrace
   end
 
-  # data.last['time'] =  data.last['time'] || 0
-  # summary['finished'] += data.last['time']
-  
   # Save data if we got sane results
 
   dircount = data[0]["dirs"].size
@@ -213,15 +210,15 @@ def fuzz_host(host, mutex = Mutex.new)
   end
 end
 
-summary = {}
-summary['date'] = Time.now
-summary['finished'] = 0
-summary['host_count'] = @options[:host_list].size
-
 total_host = @options[:host_list].size
 
+summary = {}
+summary['finished']   = 0
+summary['date']       = Time.now
+summary['host_count'] = total_host
+
 if total_host > 1
-  host_queque = WorkQueue.new(5, 20)
+  host_queque = WorkQueue.new(5, 5)
   @options[:multi] = true
   mutex = Mutex.new
 
