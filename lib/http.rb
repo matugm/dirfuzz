@@ -55,12 +55,13 @@ class Http
     begin
       timeout 10 do
         host = port_split(host)[0]
-        ip = Resolv.getaddress(host)
-        # nxredir(ip)
+        ip   = Resolv.getaddress(host)
         return ip
       end
-    rescue
+    rescue Resolv::ResolvError => e
       raise DnsFail
+    rescue Timeout::Error => e
+      raise DnsTimeout
     end
   end
 
@@ -118,7 +119,7 @@ class Http
       sc = connection(ip, port)
 
       sc.write(buff)
-      sc.sync = false
+      sc.sync  = false
       raw_data = []
 
       while data = sc.read(1024 * 4)   # Read data from the socket
@@ -134,7 +135,7 @@ class Http
   def self.connection(ip,port)
     socket = TCPSocket.open(ip, port)
     if port == "443"
-      context = OpenSSL::SSL::SSLContext.new
+      context    = OpenSSL::SSL::SSLContext.new
       ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
       ssl_client.connect
       return ssl_client
@@ -159,11 +160,11 @@ class Response
       raise InvalidHttpResponse
     end
 
-    raw_headers, body = parse_data(raw_data)
+    raw_headers, body      = parse_data(raw_data)
     @code, @code_with_name = parse_code(raw_data)
     @headers = parse_headers(raw_headers)
-    @body = decode_data(body)
-    @len = get_size(body)
+    @body    = decode_data(body)
+    @len     = get_size(body)
   end
 
   def parse_data(raw_data)
@@ -183,7 +184,7 @@ class Response
     headers = Hash.new
 
     for header in raw_headers    # Parse headers into a hash
-      temp = header.split(/:/, 2)
+      temp  = header.split(/:/, 2)
       temp[0] = temp[0].sub("\n","")
       headers["#{temp[0]}"] = temp[1].lstrip
     end
@@ -202,11 +203,13 @@ class Response
   def decode_data(body)
     if headers["Transfer-Encoding"] == "chunked"
       data = decode_chunked(body)
+      data = body if data.empty?
+    else
+      data = body
     end
 
-    data = data || body
-
-    return if body.length <= 0
+    # Stop if we don't have any data
+    return if data.length <= 0
 
     if headers["Content-Encoding"] == "deflate"
       data = Zlib::Inflate.inflate(data)
@@ -216,18 +219,18 @@ class Response
       data = Zlib::GzipReader.new(StringIO.new(data)).read
     end
 
-    return data
+    return data || ""
    end
 
   def decode_chunked(body)
-    puntero = 0
+    puntero    = 0
     tmp_buffer = ""
 
-    while (size = body[puntero..body.length].scan(/^[0-9a-f]+\r\n/)[0]) != "0\r\n"
+    while (size = body[puntero..body.length].scan(/^[0-9a-f]+\r\n/)[0]).to_i != 0
       size_decimal = size.to_i(16)
-      puntero += size.length
-      tmp_buffer += body[puntero..puntero+size_decimal-1]
-      puntero += size_decimal+2
+      puntero     += size.length
+      tmp_buffer  += body[puntero..puntero+size_decimal-1]
+      puntero     += size_decimal+2
     end
     @len = body.length
 

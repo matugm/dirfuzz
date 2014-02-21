@@ -984,6 +984,7 @@ contingut
 continguts
 contribute
 control
+controlpanel
 cookie
 cookies
 cool
@@ -1359,8 +1360,6 @@ europemirror
 evelyn
 event
 events
-ewbutton_community
-ewbutton_guestbook
 example
 examples
 excalibu
@@ -3038,7 +3037,6 @@ sergei
 serial
 serveis
 server
-server-manager
 server_stats
 servers
 service
@@ -3685,6 +3683,7 @@ whitepaper
 whitepapers
 whiting
 whitney
+whm
 who
 whois
 wholesale
