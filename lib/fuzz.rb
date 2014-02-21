@@ -3,7 +3,7 @@ class Dirfuzz
 
   def initialize(options,env)
     @options = options
-    @dirs = env[:dirs]
+    @dirs  = env[:dirs]
     @ofile = env[:ofile]
     @baseurl = env[:baseurl]
     @threads = env[:thread_queue]
@@ -132,27 +132,48 @@ class Dirfuzz
     progress = 0
 
     threads  = @options[:threads].to_i
-    @threads = WorkQueue.new(threads,threads * 2) # Setup thread queue
+    thread_queue  = WorkQueue.new(threads, threads) # Setup thread queue
 
     @dirs.each do |url|  # Iterate over our dictionary of words for fuzzing
 
-      @threads.enqueue_b(url) do |url|   # Start thread block
+      thread_queue.enqueue_b(url) do |url|   # Start thread block
 
       req = url.chomp
       path = @options[:path] + req + @options[:ext]      # Add together the start path, the dir/file to test and the extension
-      get = Http.get(@baseurl,@ip,path,@options[:headers])  if @options[:get] == true  # Send a get request (default)
-      get = Http.head(@baseurl,@ip,path,@options[:headers]) if @options[:get] == false # Send a head request
+
+      # HTTP request
+      begin
+        get = Http.get(@baseurl,@ip,path,@options[:headers])  if @options[:get] == true  # get request (default)
+        get = Http.head(@baseurl,@ip,path,@options[:headers]) if @options[:get] == false # head request
+      rescue Exception => e
+        unless e.is_a? Timeout::Error
+          #puts "Failed http request for host #{@baseurl} path #{path} with error #{e.class}"
+        end
+      end
+
+      # Make sure we got a valid response
+      next unless get.body
+
+      # Parse HTTP response code
       code = Code.new(get)
 
+      # Remove trailing space and ending slash if there is one
       path.chomp!
-      path.chop! if path =~ /\/$/ # Remove ending slash if there is one
+      path.chop! if path =~ /\/$/ 
 
+      # Prepare extra info, like response length.
       extra = "  - Len: " + get.len.to_s if code.ok
       extra = "  - Dir. Index" if get.body.include?("Index of #{path}") and code.ok
       extra = "  - Dir. Index" if get.len == nil and code.ok and @options[:get] == false
       extra = "" if extra == nil
 
-      output = ["%yellow" + " " * (16 - req.length) + "  => " + code.name + extra, path]
+      if req.length < 16
+        spaces = " " * (16 - req.length)
+      else
+        spaces = " " * 16
+      end
+
+      output = ["%yellow" + spaces + "  => " + code.name + extra, path]
 
       # Update progress
       pcount += 1
@@ -196,14 +217,15 @@ class Dirfuzz
     end  # end thread block
   end
 
-    @threads.join  # wait for threads to end
+    thread_queue.join  # wait for threads to end
+    thread_queue.kill
 
     clear_line()
     time = "%0.1f" % [Time.now - beginning]
     print_output("\n\n%green\n\n","[+] Fuzzing done! It took a total of #{time} seconds.")
 
     host['found'] = host['dirs'].size
-    host['time'] = time.to_f
+    host['time']  = time.to_f
     return host
     end
 end

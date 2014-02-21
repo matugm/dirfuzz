@@ -60,7 +60,7 @@ opts.banner = banner
     begin
       fd = File.open(file)
     rescue Errno::ENOENT
-      abort "The file you specified dosn't seem to exist."
+      abort "The host file you specified does not exist."
     end
     @options[:host_list] = fd.readlines
     fd.close
@@ -171,9 +171,6 @@ file = File.new('data/fdirs.txt','r')  # Load dictionary file
 @env[:dirs] = file.readlines
 file.close
 
-threads = @options[:threads].to_i
-@env[:thread_queue] = WorkQueue.new(threads,threads*2) # Setup thread queue
-
 trap("INT") do   # Capture Ctrl-C
   @options[:file] = nil
   print_output("%red","\n[-] Stoped by user request...")
@@ -192,15 +189,16 @@ def fuzz_host(host, mutex = Mutex.new)
   rescue InvalidHttpResponse
     puts "Server responded with an invalid http packet, skipping..."
     return
-  rescue DnsFail
+  rescue DnsFail => e
     puts "[-] Couldn't resolve name: #{@env[:baseurl]}\n\n"
     return
   rescue Exception => e
     puts "[-] Error -> " + e.message
-    # puts e.backtrace
+    puts e.backtrace
   end
 
   # Save data if we got sane results
+  return if !data[0]
 
   dircount = data[0]["dirs"].size
   if dircount < 100
@@ -208,6 +206,7 @@ def fuzz_host(host, mutex = Mutex.new)
       File.open("log.json", "a+") { |file| file.puts data.to_json }
     }
   end
+
 end
 
 total_host = @options[:host_list].size
@@ -234,8 +233,14 @@ if total_host > 1
   end
 
   host_queque.join
+
+  time = "%0.1f" % [Time.now - summary['date']]
+  puts "[ multi-scan ] finished after #{time} seconds"
 else
-  host = @options[:host_list].first
+  host    = @options[:host_list].first
+  threads = @options[:threads].to_i
+  @env[:thread_queue] = WorkQueue.new(threads,threads*2)
+
   fuzz_host(host) 
 end
 
