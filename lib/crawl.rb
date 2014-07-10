@@ -9,8 +9,9 @@ class Crawler
     a_tags = html.xpath("//a[@href]")
    #form_tags = html.xpath("//form[@action]")  # Parsing of form tags, not implemented yet.
     links = []
-    a_tags.each { |a| links << a[:href]  }
+    a_tags.each { |a| links << a[:href]  } # Extract the href attribute.
     links = links.sort.uniq
+
     return links
   end
 
@@ -19,9 +20,9 @@ class Crawler
 
     @links = parse html
 
-    @abs_links = []
-    @ext_links = []
-    @rel_links = []
+    @abs_links  = []
+    @ext_links  = []
+    @rel_links  = []
     @mail_links = []
   end
 
