@@ -78,7 +78,7 @@ class Http
   def self.request (host,ip,path,method,headers = "",data = "")
 
     host,port = port_split(host)
-    agentset = 0
+    agentset  = 0
 
     case method
       when "get"  then buff = "GET "
@@ -89,7 +89,7 @@ class Http
     buff += "#{path} HTTP/1.1\r\n"
     buff += "Host: #{host}\r\n"
     buff += "Connection: close\r\n"
-    buff += "Accept-Encoding: gzip;q=1.0, deflate;q=0.6, identity;q=0.3\r\n"  # Prefer no encoding over gzip...
+    buff += "Accept-Encoding: gzip;q=1.0, deflate;q=0.6, identity;q=0.3\r\n"
 
     if headers != ""
       headers.each do |header|
@@ -100,7 +100,7 @@ class Http
       end
     end
 
-    buff += "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/4.0\r\n" if agentset == 0
+    buff += "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0\r\n" if agentset == 0
 
     if method == "post"
       buff += "Content-Type: application/x-www-form-urlencoded\r\n"
