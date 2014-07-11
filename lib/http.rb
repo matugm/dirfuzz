@@ -9,6 +9,37 @@ require 'zlib'
 require 'stringio'
 require 'resolv'
 
+class Request
+  attr_reader :buff, :agentset
+
+  def initialize(host, method, path)
+    @buff = ""
+    @agentset = 0
+
+    case method
+      when "get"  then @buff = "GET "
+      when "post" then @buff = "POST "
+      else @buff = "HEAD "
+    end
+
+    @buff += "#{path} HTTP/1.1\r\n"
+    @buff += "Host: #{host}\r\n"
+    @buff += "Connection: close\r\n"
+    @buff += "Accept-Encoding: gzip;q=1.0, deflate;q=0.6, identity;q=0.3\r\n"
+  end
+
+  def user_agent= (agent)
+    @buff += agent unless @agentset
+  end
+
+  def build_headers(headers)
+    headers.each do |header|
+      @buff += "#{header}\r\n"
+      @agentset = 1 if header =~ /User-Agent/i
+    end
+  end
+end
+
 class Http
 # Sets the method to GET and calls request
   def self.get (host,ip,path,headers)
@@ -52,8 +83,12 @@ class Http
 
 # Resolves a name and returns the ip
   def self.resolv (host)
+    retry_count = 0
+
     begin
-      timeout 10 do
+      retry_count += 1
+
+      timeout 3 do
         host = port_split(host)[0]
         ip   = Resolv.getaddress(host)
         return ip
@@ -61,6 +96,9 @@ class Http
     rescue Resolv::ResolvError => e
       raise DnsFail
     rescue Timeout::Error => e
+      if retry_count < 3
+        retry
+      end
       raise DnsTimeout
     end
   end
@@ -77,30 +115,15 @@ class Http
 # for the results of the request.
   def self.request (host,ip,path,method,headers = "",data = "")
 
-    host,port = port_split(host)
-    agentset  = 0
+    host, port = port_split(host)
+    req = Request.new(host, method, path)
 
-    case method
-      when "get"  then buff = "GET "
-      when "post" then buff = "POST "
-      else buff = "HEAD "
+    unless headers.empty?
+      req.build_headers(headers)
     end
 
-    buff += "#{path} HTTP/1.1\r\n"
-    buff += "Host: #{host}\r\n"
-    buff += "Connection: close\r\n"
-    buff += "Accept-Encoding: gzip;q=1.0, deflate;q=0.6, identity;q=0.3\r\n"
-
-    if headers != ""
-      headers.each do |header|
-        buff += "#{header}\r\n"
-        if header =~ /User-Agent/i
-          agentset = 1
-        end
-      end
-    end
-
-    buff += "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0\r\n" if agentset == 0
+    req.user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0\r\n"
+    buff = req.buff
 
     if method == "post"
       buff += "Content-Type: application/x-www-form-urlencoded\r\n"
@@ -110,7 +133,7 @@ class Http
       buff += "\r\n"
     end
 
-    send_request(ip,port,buff)
+    send_request(ip, port, buff)
   end
 
   def self.send_request (ip, port, buff)
@@ -146,6 +169,9 @@ class Http
 end
 
 class DnsFail < StandardError
+end
+
+class DnsTimeout < StandardError
 end
 
 class InvalidHttpResponse < StandardError

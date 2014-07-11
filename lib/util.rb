@@ -55,7 +55,7 @@ module Util
     attr_reader :code
   end
 
-  def print_output (msg,*colored_words)
+  def print_output (msg, *colored_words)
 
     return if @options[:multi]
 

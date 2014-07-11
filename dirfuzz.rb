@@ -244,7 +244,6 @@ else
   fuzz_host(host)
 end
 
-
 summary['finished'] = "%0.1f" % [summary['finished']]
 
 if @options[:info_mode]

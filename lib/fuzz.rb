@@ -189,8 +189,12 @@ class Dirfuzz
       start_crawler(html)
     end
 
-    if $stdout.isatty  and !@options[:multi]
+    if $stdout.isatty && !@options[:multi]
       progress_bar = Progress.new  # Setup our progress bar
+    end
+
+    if @options[:multi]
+      progress_bar = ProgressMulti.new(@baseurl)
     end
 
     threads  = @options[:threads].to_i
@@ -202,8 +206,6 @@ class Dirfuzz
 
       req = url.chomp
       path = @options[:path] + req + @options[:ext]   # Add together the start path, the dir/file to test and the extension
-
-      # fuzz = FuzzResult.new(url, path)
 
       # HTTP request
       start_time = Time.now
@@ -232,7 +234,6 @@ class Dirfuzz
       spaces = get_spaces(req)
 
       output = ["%yellow" + spaces + "  => " + code.name + extra, path]
-
       # Update progress
       progress_bar.update
 
