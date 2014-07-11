@@ -128,6 +128,23 @@ class Dirfuzz
     end
   end
 
+  def process_results(path, code, extra, get, output)
+    if (code.redirect?)    # Check if we got a redirect
+      if @options[:redir] == 0
+        # Follow redirect
+        redir_do(get.headers['Location'], output)
+      end
+    elsif (code.found_something?)    # Check if we found something and print output
+      return "" if code.ignore? @options[:redir]
+
+      clear_line()
+      print_output(output[0], output[1])
+
+      # Save the results for processing later
+      [path, code.name, extra]
+    end
+  end
+
   def run
     beginning = Time.now
 
@@ -186,6 +203,8 @@ class Dirfuzz
       req = url.chomp
       path = @options[:path] + req + @options[:ext]   # Add together the start path, the dir/file to test and the extension
 
+      # fuzz = FuzzResult.new(url, path)
+
       # HTTP request
       start_time = Time.now
       begin
@@ -217,20 +236,8 @@ class Dirfuzz
       # Update progress
       progress_bar.update
 
-      if (code.redirect?)    # Check if we got a redirect
-        if @options[:redir] == 0
-          # Follow redirect
-          host['dirs'] << redir_do(get.headers['Location'], output)
-        end
-      elsif (code.found_something?)    # Check if we found something and print output
-        next if code.ignore? @options[:redir]
-
-        clear_line()
-        print_output(output[0], output[1])
-
-        # Save the results for processing later
-        host['dirs'] << [path, code.name, extra]
-      end
+      results = process_results(path, code, extra, get, output)
+      host['dirs'] << results unless results.empty?
 
     end  # end thread block
   end
