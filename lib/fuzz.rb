@@ -142,6 +142,7 @@ class Dirfuzz
       path = @options[:path] + req + @options[:ext]      # Add together the start path, the dir/file to test and the extension
 
       # HTTP request
+      start_time = Time.now
       begin
         get = Http.get(@baseurl,@ip,path,@options[:headers])  if @options[:get] == true  # get request (default)
         get = Http.head(@baseurl,@ip,path,@options[:headers]) if @options[:get] == false # head request
@@ -150,6 +151,7 @@ class Dirfuzz
           #puts "Failed http request for host #{@baseurl} path #{path} with error #{e.class}"
         end
       end
+      end_time = start_time - Time.now
 
       # Make sure we got a valid response
       next unless get.body
@@ -159,7 +161,7 @@ class Dirfuzz
 
       # Remove trailing space and ending slash if there is one
       path.chomp!
-      path.chop! if path =~ /\/$/ 
+      path.chop! if path =~ /\/$/
 
       # Prepare extra info, like response length.
       extra = "  - Len: " + get.len.to_s if code.ok
@@ -178,13 +180,12 @@ class Dirfuzz
       # Update progress
       pcount += 1
 
-      if pcount % 37 == 0 
+      if pcount % 37 == 0
         if @options[:multi]
           progress += 1
           if progress % 10 == 0
             puts "[ update ] #{@baseurl} -> #{progress}%"
           end
-
         elsif $stdout.isatty
           pbar.inc
         end
