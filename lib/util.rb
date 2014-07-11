@@ -11,6 +11,11 @@ module Util
     print RESET if $stdout.isatty
   end
 
+  def get_base_url(url)
+    base = ARGV[0].sub("http://","")
+    base.chop! if @env[:baseurl][-1] == "/"
+  end
+
   class Code
     def initialize(get)
       @code = get.code
