@@ -46,8 +46,7 @@ if ARGV[0] == nil
   puts banner + "Please use -h for help."
   exit()
 else
-  @env[:baseurl] = ARGV[0].sub("http://","")
-  @env[:baseurl].chop! if @env[:baseurl][-1] == "/"
+  @env[:baseurl] = get_base_url(ARGV[0])
 end
 
 @options = {}
@@ -241,7 +240,7 @@ else
   threads = @options[:threads].to_i
   @env[:thread_queue] = WorkQueue.new(threads,threads*2)
 
-  fuzz_host(host) 
+  fuzz_host(host)
 end
 
 
