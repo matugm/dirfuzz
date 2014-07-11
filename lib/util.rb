@@ -3,6 +3,24 @@
 
 module Util
 
+  cr = "\r"
+  clear = "\e[0K"
+  RESET = cr + clear
+
+  def clear_line
+    print RESET if $stdout.isatty
+  end
+
+  def remove_trailing_slash(base)
+    # Check if it ends in a slash and if so remove it
+    (base[-1] == "/")? base.chop : base
+  end
+
+  def get_base_url(url)
+    base = ARGV[0].sub("http://","")
+    remove_trailing_slash(base)
+  end
+
   class Code
     def initialize(get)
       @code = get.code
@@ -27,7 +45,7 @@ module Util
 
     def ignore? (ignore_code)
       return false if ignore_code.instance_of? Fixnum
-      @code == ignore_code.split(':')[1].to_i
+      ignore_code.scan(/\d+/).include? @code.to_s
     end
 
     def name
@@ -37,7 +55,9 @@ module Util
     attr_reader :code
   end
 
-  def print_output (msg,*colored_words)
+  def print_output (msg, *colored_words)
+
+    return if @options[:multi]
 
     coloring = OutputColor.new(colored_words, @options[:nocolors])
 

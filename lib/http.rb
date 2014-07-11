@@ -9,6 +9,37 @@ require 'zlib'
 require 'stringio'
 require 'resolv'
 
+class Request
+  attr_reader :buff, :agentset
+
+  def initialize(host, method, path)
+    @buff = ""
+    @agentset = 0
+
+    case method
+      when "get"  then @buff = "GET "
+      when "post" then @buff = "POST "
+      else @buff = "HEAD "
+    end
+
+    @buff += "#{path} HTTP/1.1\r\n"
+    @buff += "Host: #{host}\r\n"
+    @buff += "Connection: close\r\n"
+    @buff += "Accept-Encoding: gzip;q=1.0, deflate;q=0.6, identity;q=0.3\r\n"
+  end
+
+  def user_agent= (agent)
+    @buff += agent unless @agentset
+  end
+
+  def build_headers(headers)
+    headers.each do |header|
+      @buff += "#{header}\r\n"
+      @agentset = 1 if header =~ /User-Agent/i
+    end
+  end
+end
+
 class Http
 # Sets the method to GET and calls request
   def self.get (host,ip,path,headers)
@@ -20,9 +51,10 @@ class Http
     method = "get"
     host.sub!("http://",'')
     host, path = host.split("/",2)
-    ip = resolv(host)
     path = "" if path == nil
     path = "/" + path
+
+    ip = resolv(host)
     request(host,ip,path,method)
   end
 
@@ -51,17 +83,23 @@ class Http
 
 # Resolves a name and returns the ip
   def self.resolv (host)
+    retry_count = 0
+
     begin
-      timeout 10 do
+      retry_count += 1
+
+      timeout 3 do
         host = port_split(host)[0]
-        ip = Resolv.getaddress(host)
-        nxredir(ip)
+        ip   = Resolv.getaddress(host)
         return ip
       end
-    rescue
-      puts "[-] Couldn't resolve name: #{host}\n\n"
-      puts "[-] Exiting..."
-      exit
+    rescue Resolv::ResolvError => e
+      raise DnsFail
+    rescue Timeout::Error => e
+      if retry_count < 3
+        retry
+      end
+      raise DnsTimeout
     end
   end
 
@@ -77,30 +115,15 @@ class Http
 # for the results of the request.
   def self.request (host,ip,path,method,headers = "",data = "")
 
-    host,port = port_split(host)
-    agentset = 0
+    host, port = port_split(host)
+    req = Request.new(host, method, path)
 
-    case method
-      when "get"  then buff = "GET "
-      when "post" then buff = "POST "
-      else buff = "HEAD "
+    unless headers.empty?
+      req.build_headers(headers)
     end
 
-    buff += "#{path} HTTP/1.1\r\n"
-    buff += "Host: #{host}\r\n"
-    buff += "Connection: close\r\n"
-    buff += "Accept-Encoding: identity; q=1, gzip; q=0.5\r\n"  # Prefer no encoding over gzip...
-
-    if headers != ""
-      headers.each do |header|
-        buff += "#{header}\r\n"
-        if header =~ /User-Agent/i
-          agentset = 1
-        end
-      end
-    end
-
-    buff += "User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/4.0\r\n" if agentset == 0
+    req.user_agent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:25.0) Gecko/20100101 Firefox/25.0\r\n"
+    buff = req.buff
 
     if method == "post"
       buff += "Content-Type: application/x-www-form-urlencoded\r\n"
@@ -110,30 +133,32 @@ class Http
       buff += "\r\n"
     end
 
-    send_request(ip,port,buff)
+    send_request(ip, port, buff)
   end
 
   def self.send_request (ip, port, buff)
     # TO DO: Add proxy support
-    sc = timeout 5 do     # Throw an exception Timeout::Error if we can't connect in 5 seconds
-      connection(ip, port)
-    end
-    sc.write(buff)
-    sc.sync = true
-    res = []
-    while data = sc.read(2048)   # Read all data from the socket
-      res << data
-    end
-    sc.close
-    obj = Response.new(res.join(''))
+    timeout 10 do     # Throws an exception Timeout::Error if we can't connect in 5 seconds
+      sc = connection(ip, port)
 
-    return obj   # Return a response object
+      sc.write(buff)
+      sc.sync  = false
+      raw_data = []
+
+      while data = sc.read(1024 * 4)   # Read data from the socket
+        raw_data << data
+      end
+
+      sc.close
+      obj = Response.new(raw_data.join)
+    end
+
   end
 
   def self.connection(ip,port)
     socket = TCPSocket.open(ip, port)
     if port == "443"
-      context = OpenSSL::SSL::SSLContext.new
+      context    = OpenSSL::SSL::SSLContext.new
       ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
       ssl_client.connect
       return ssl_client
@@ -143,78 +168,101 @@ class Http
 
 end
 
-class NxRedir < StandardError
+class DnsFail < StandardError
 end
+
+class DnsTimeout < StandardError
+end
+
+class InvalidHttpResponse < StandardError
+end
+
 
 class Response
 
-  def initialize(res)
-    @res = res
-    @headers = Hash.new
+  def initialize(raw_data)
 
-    split_data
-    parse_headers
-    set_size
-    check_encoding
-    set_code
+    if raw_data.empty?
+      raise InvalidHttpResponse
+    end
+
+    raw_headers, body      = parse_data(raw_data)
+    @code, @code_with_name = parse_code(raw_data)
+    @headers = parse_headers(raw_headers)
+    @body    = decode_data(body)
+    @len     = get_size(body)
   end
 
-  def split_data
-    b = res.split("\r\n\r\n",2)
-    @res = res.split("\r")
-    @raw_headers = b[0].split("\r")
-    @raw_headers.delete_at(0)
-    @body = b[1]
+  def parse_data(raw_data)
+    raw_headers, body = raw_data.split("\r\n\r\n",2)
+
+    raw_headers = raw_headers.split("\r")
+    raw_headers.delete_at(0)
+
+    if body.nil? or !raw_data.start_with? "HTTP"
+      raise InvalidHttpResponse
+    end
+
+    return raw_headers, body
   end
 
-  def parse_headers
-    for i in @raw_headers    # Parse headers into a hash
-      temp = i.split(/:/, 2)
+  def parse_headers(raw_headers)
+    headers = Hash.new
+
+    raw_headers.each do |header|    # Parse headers into a hash
+      temp  = header.split(/:/, 2)
       temp[0] = temp[0].sub("\n","")
-      @headers["#{temp[0]}"] = temp[1].lstrip
+      headers["#{temp[0]}"] = temp[1].lstrip
     end
+
+    return headers
   end
 
-  def set_size
+  def get_size(body)
     if headers["Content-Length"]
-      @len = headers["Content-Length"]
+      len = headers["Content-Length"]
     else
-      @len = @body.length
+      len = body.length
     end
   end
 
-  def check_encoding
+  def decode_data(body)
     if headers["Transfer-Encoding"] == "chunked"
-      decode_chunked
+      data = decode_chunked(body)
+      data = body if data.empty?
+    else
+      data = body
     end
 
-    if headers["Content-Encoding"] == "gzip" and @body.length > 0
-      @body = Zlib::GzipReader.new(StringIO.new(@body)).read
-      @len = @body.length
+    # Stop if we don't have any data
+    return if data.length <= 0
+
+    if headers["Content-Encoding"] == "deflate"
+      data = Zlib::Inflate.inflate(data)
     end
+
+    if headers["Content-Encoding"] == "gzip"
+      data = Zlib::GzipReader.new(StringIO.new(data)).read
+    end
+
+    return data || ""
    end
 
-  def decode_chunked
-    puntero = 0
-    tmp_buffer = ""
-    while (size = @body[puntero..@body.length].scan(/^[0-9a-f]+\r\n/)[0]) != "0\r\n"
-      size_decimal = size.to_i(16)
-      puntero += size.length
-      tmp_buffer += @body[puntero..puntero+size_decimal-1]
-      puntero += size_decimal+2
-    end
-    @body = tmp_buffer
-    @len = @body.length
+  def decode_chunked(body)
+    @len = body.length
+    body = body.split(/^[0-9a-fA-F]+\r\n/).join.split(/\r\n/).join
   end
 
-  def set_code
-    code = res[0].split(" ")
-    @code = code[1].to_i
-    name = res[0]
-    @code_with_name = name[9,(name.length-9)]
+  def parse_code(raw_data)
+    raw_data = raw_data.split("\r")
+    code = raw_data[0].split(" ")
+    code = code[1].to_i
+    name = raw_data[0]
+    code_with_name = name[9,(name.length-9)]
+
+    return code, code_with_name
   end
 
-  attr_reader :code, :code_with_name, :body, :headers, :len, :res
+  attr_reader :code, :code_with_name, :body, :headers, :len
 
 end
-

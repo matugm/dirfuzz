@@ -9,8 +9,9 @@ class Crawler
     a_tags = html.xpath("//a[@href]")
    #form_tags = html.xpath("//form[@action]")  # Parsing of form tags, not implemented yet.
     links = []
-    a_tags.each { |a| links << a[:href]  }
+    a_tags.each { |a| links << a[:href]  } # Extract the href attribute.
     links = links.sort.uniq
+
     return links
   end
 
@@ -19,9 +20,9 @@ class Crawler
 
     @links = parse html
 
-    @abs_links = []
-    @ext_links = []
-    @rel_links = []
+    @abs_links  = []
+    @ext_links  = []
+    @rel_links  = []
     @mail_links = []
   end
 
@@ -134,8 +135,9 @@ class Crawler
       @abs_links.sort.uniq { |link| link[/.*\?(?:\w+=)(?=\d+)|[\w\/.-]+/] }
     when "relative"
       @rel_links = @rel_links.sort.uniq { |link| link[/.*\/?(?:[\w_-]+)/] }
-      @rel_links.map { |e| e.gsub(/^\/\w+\/\w+/) { |link| " "*4 + link  } }
+      @rel_links.map { |e| e.gsub(/^\/[\w_-]+\/\w+/) { |link| " " * 4 + link  } }
     when "mail"
+      @mail_links = @mail_links.find_all { |m| m =~ /@/ }  # Avoid incorrectly formated mailto links
       @mail_links = @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }
       @mail_links.uniq.map { |m| m.sub('mailto:','') }
     when "robots"

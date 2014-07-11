@@ -1,0 +1,32 @@
+<div class="bloc">
+	<div class="header">
+	<a href=http://<%= host['url'] %> target="blank_"><%= host['url']%></a>
+	</div>
+	<div class ="data">
+	<p>
+	<ul>
+		<li><div class="label">Title:</div> <%= host['title'] %></li>
+		<li><div class="label">Server:</div> <%= host['server'] %></li>
+
+		<% if File.exist? "#{@report_dir}/#{host['url']}.jpg" %>
+			<br>
+			<li><div class="label">Screenshot:</div><br><br>
+			<img style="height: 300; widht: 400;" src="<%= @report_dir %>/<%= host['url'] %>.jpg"></li>
+			<br>
+		<% else %>
+			<li><div class="label">Dirs found:</div> <%= host['found'] %></li>
+		<% end %>
+
+		<br>
+		<div class="dirs">
+		<% host['dirs'].each do |dir| %>
+			<li><div class="label"><%= dir[0] %></div><%= dir[1] %> <%= dir[2] %></li>
+		<% end %>
+		</div>
+
+	</ul>
+	</p>
+	</div>
+</div>
+<br>
+<br>
