@@ -46,6 +46,8 @@ class Dirfuzz
     return [output[1], "#{code}  [ -> #{orig_loc} #{fredirect.code.to_s} ]"]
   end
 
+
+
   def run
     beginning = Time.now
 
@@ -124,12 +126,8 @@ class Dirfuzz
     end
 
     if $stdout.isatty  and !@options[:multi]
-      pbar = ProgressBar.new("Fuzzing", 100, out=$stdout) # Setup our progress bar
+      progress_bar = Progress.new  # Setup our progress bar
     end
-
-    pcount   = 0
-    repeated = 0
-    progress = 0
 
     threads  = @options[:threads].to_i
     thread_queue  = WorkQueue.new(threads, threads) # Setup thread queue
@@ -139,7 +137,7 @@ class Dirfuzz
       thread_queue.enqueue_b(url) do |url|   # Start thread block
 
       req = url.chomp
-      path = @options[:path] + req + @options[:ext]      # Add together the start path, the dir/file to test and the extension
+      path = @options[:path] + req + @options[:ext]   # Add together the start path, the dir/file to test and the extension
 
       # HTTP request
       start_time = Time.now
@@ -178,18 +176,7 @@ class Dirfuzz
       output = ["%yellow" + spaces + "  => " + code.name + extra, path]
 
       # Update progress
-      pcount += 1
-
-      if pcount % 37 == 0
-        if @options[:multi]
-          progress += 1
-          if progress % 10 == 0
-            puts "[ update ] #{@baseurl} -> #{progress}%"
-          end
-        elsif $stdout.isatty
-          pbar.inc
-        end
-      end
+      progress_bar.update
 
       if (code.redirect?)    # Check if we got a redirect
         if @options[:redir] == 0
