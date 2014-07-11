@@ -17,12 +17,12 @@ class Http
   end
 # Simple method for a quick GET request
   def self.open (host)
-    method = "get"   
+    method = "get"
     host.sub!("http://",'')
     host, path = host.split("/",2)
     path = "" if path == nil
     path = "/" + path
-    
+
     ip = resolv(host)
     request(host,ip,path,method)
   end
@@ -183,7 +183,7 @@ class Response
   def parse_headers(raw_headers)
     headers = Hash.new
 
-    for header in raw_headers    # Parse headers into a hash
+    raw_headers.each do |header|    # Parse headers into a hash
       temp  = header.split(/:/, 2)
       temp[0] = temp[0].sub("\n","")
       headers["#{temp[0]}"] = temp[1].lstrip
@@ -223,18 +223,8 @@ class Response
    end
 
   def decode_chunked(body)
-    puntero    = 0
-    tmp_buffer = ""
-
-    while (size = body[puntero..body.length].scan(/^[0-9a-f]+\r\n/)[0]).to_i != 0
-      size_decimal = size.to_i(16)
-      puntero     += size.length
-      tmp_buffer  += body[puntero..puntero+size_decimal-1]
-      puntero     += size_decimal+2
-    end
     @len = body.length
-
-    return tmp_buffer
+    body = body.split(/^[0-9a-fA-F]+\r\n/).join.split(/\r\n/).join
   end
 
   def parse_code(raw_data)
