@@ -58,6 +58,21 @@ class Dirfuzz
     return extra
   end
 
+  def repeated_response
+    if host['dirs'].any? and code.name == host['dirs'].last[1]
+      unless code.code == 200 and extra != host['dirs'].last[2]
+        repeated += 1
+        if repeated >= 6
+          @options[:redir] = "" if @options[:redir].instance_of? Fixnum
+          @options[:redir] << code.code.to_s
+          puts "Too many #{code.code} reponses in a row, ignoring...\n\n" unless @options[:multi]
+        end
+      end
+    else
+      repeated = 0
+    end
+  end
+
   def run
     beginning = Time.now
 
@@ -187,28 +202,16 @@ class Dirfuzz
 
       if (code.redirect?)    # Check if we got a redirect
         if @options[:redir] == 0
-          host['dirs'] << redir_do(get.headers['Location'],output)
+          host['dirs'] << redir_do(get.headers['Location'], output)
         end
       elsif (code.found_something?)    # Check if we found something and print output
         next if code.ignore? @options[:redir]
         clear_line()
-        print_output(output[0],output[1])
+        print_output(output[0], output[1])
 
-        if host['dirs'].any? and code.name == host['dirs'].last[1]
-          unless code.code == 200 and extra != host['dirs'].last[2]
-            repeated += 1
-            if repeated >= 6
-              @options[:redir] = "" if @options[:redir].instance_of? Fixnum
-              @options[:redir] << code.code.to_s
-              puts "Too many #{code.code} reponses in a row, ignoring...\n\n" unless @options[:multi]
-            end
-          end
-        else
-          repeated = 0
-        end
-          host['dirs'] << [path, code.name, extra]
+        # Save the results for processing later
+        host['dirs'] << [path, code.name, extra]
       end
-        repeated = 0 if code.code == 404  # Reset counter if dir not found.
     end  # end thread block
   end
 
