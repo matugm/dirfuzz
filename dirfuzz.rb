@@ -21,6 +21,7 @@ $: << '.'
 
 require 'lib/fuzz'
 require 'lib/http'
+require 'lib/progress'
 require 'lib/progressbar'
 require 'lib/util'
 require 'lib/crawl'
