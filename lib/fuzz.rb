@@ -46,7 +46,17 @@ class Dirfuzz
     return [output[1], "#{code}  [ -> #{orig_loc} #{fredirect.code.to_s} ]"]
   end
 
+  def get_output_data(get, code, path)
+    if code.ok
+      extra = "  - Len: " + get.len.to_s
+      extra = "  - Dir. Index" if get.body.include?("Index of #{path}")
+      extra = "  - Dir. Index" if get.len == nil and @options[:get] == false
+    end
 
+    extra = "" if extra == nil
+
+    return extra
+  end
 
   def run
     beginning = Time.now
@@ -162,10 +172,7 @@ class Dirfuzz
       path.chop! if path =~ /\/$/
 
       # Prepare extra info, like response length.
-      extra = "  - Len: " + get.len.to_s if code.ok
-      extra = "  - Dir. Index" if get.body.include?("Index of #{path}") and code.ok
-      extra = "  - Dir. Index" if get.len == nil and code.ok and @options[:get] == false
-      extra = "" if extra == nil
+      extra = get_output_data(get, code, path)
 
       if req.length < 16
         spaces = " " * (16 - req.length)
