@@ -41,7 +41,7 @@ end
 
 @env = {}
 
-banner = "DirFuzz 1.5 Dev by matugm\nUsage: #{$0} host[:port] [options]\n"
+banner = "DirFuzz 1.6 Beta by matugm\nUsage: #{$0} host[:port] [options]\n"
 
 if ARGV[0] == nil
   puts banner + "Please use -h for help."

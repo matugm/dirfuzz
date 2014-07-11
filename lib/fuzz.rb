@@ -46,18 +46,6 @@ class Dirfuzz
     return [output[1], "#{code}  [ -> #{orig_loc} #{fredirect.code.to_s} ]"]
   end
 
-  def get_output_data(get, code, path)
-    if code.ok
-      extra = "  - Len: " + get.len.to_s
-      extra = "  - Dir. Index" if get.body.include?("Index of #{path}")
-      extra = "  - Dir. Index" if get.len == nil and @options[:get] == false
-    end
-
-    extra = "" if extra == nil
-
-    return extra
-  end
-
   def repeated_response
     if host['dirs'].any? and code.name == host['dirs'].last[1]
       unless code.code == 200 and extra != host['dirs'].last[2]
@@ -73,6 +61,18 @@ class Dirfuzz
     end
   end
 
+  def get_output_data(get, code, path)
+    if code.ok
+      extra = "  - Len: " + get.len.to_s
+      extra = "  - Dir. Index" if get.body.include?("Index of #{path}")
+      extra = "  - Dir. Index" if get.len == nil and @options[:get] == false
+    end
+
+    extra = "" if extra == nil
+
+    return extra
+  end
+
   def start_crawler(html)
     level = @options[:links].to_i
     print_output("%blue","\n[+] Links: ")
@@ -84,6 +84,48 @@ class Dirfuzz
 
     print_output("%blue","\n[+] Dirs: ")
     puts
+  end
+
+  def check_redirect(get)
+    if (get.code == 301 or get.code == 302)
+      if get.headers['Location'].include? "https://"
+        puts "Sorry couldn't retrieve links - Main page redirected to SSL site, you may want to try setting the port to 443." if @options[:links]
+      elsif get.headers['Location'].include? "http://"
+        get = Http.open(get.headers['Location'])
+      else
+        get = Http.open(@baseurl + get.headers['Location'])
+      end
+    end
+
+    return get
+  end
+
+  def print_generator(html)
+    generator = false
+    meta = html.xpath("//meta")
+    meta.each { |m| generator = m[:content] if m[:name] == "generator" }
+
+    if generator
+      print_output("%green %yellow","[%] Meta-Generator: ","#{generator}\n\n")
+    end
+  end
+
+  def get_title(html)
+    title = html.xpath("//title")
+
+    if title.any?
+      title.first.text
+    else
+      "(No title)"
+    end
+  end
+
+  def get_spaces(req)
+    if req.length < 16
+      spaces = " " * (16 - req.length)
+    else
+      spaces = " " * 16
+    end
   end
 
   def run
@@ -110,36 +152,13 @@ class Dirfuzz
     end
 
     host['server'] = get.headers['Server']
+    print_output("%green %yellow","[+] Server:","#{host['server']}")
 
-    print_output("%green %yellow","[+] Server:","#{get.headers['Server']}")
-
-    if (get.code == 301 or get.code == 302)
-      if get.headers['Location'].include? "https://"
-        puts "Sorry couldn't retrieve links - Main page redirected to SSL site, you may want to try setting the port to 443." if @options[:links]
-      elsif get.headers['Location'].include? "http://"
-        get = Http.open(get.headers['Location'])
-      else
-        get = Http.open(@baseurl + get.headers['Location'])
-      end
-    end
-
+    get = check_redirect(get)
     html = Nokogiri::HTML.parse(get.body)
 
-    generator = nil
-    meta = html.xpath("//meta")
-    meta.each { |m| generator = m[:content] if m[:name] == "generator" }
-
-    if generator
-      print_output("%green %yellow","[%] Meta-Generator: ","#{generator}\n\n")
-    end
-
-    title = html.xpath("//title")
-
-    if title.any?
-      host['title'] = title.first.text
-    else
-      host['title'] = "(No title)"
-    end
+    print_generator(html)
+    host['title'] = get_title(html)
 
     if @options[:info_mode]
       print_output("%green %yellow","[+] Title:","#{host['title']}\n\n")
@@ -177,7 +196,7 @@ class Dirfuzz
           #puts "Failed http request for host #{@baseurl} path #{path} with error #{e.class}"
         end
       end
-      end_time = start_time - Time.now
+      end_time = Time.now - start_time
 
       # Make sure we got a valid response
       next unless get.body
@@ -190,13 +209,8 @@ class Dirfuzz
       path.chop! if path =~ /\/$/
 
       # Prepare extra info, like response length.
-      extra = get_output_data(get, code, path)
-
-      if req.length < 16
-        spaces = " " * (16 - req.length)
-      else
-        spaces = " " * 16
-      end
+      extra  = get_output_data(get, code, path)
+      spaces = get_spaces(req)
 
       output = ["%yellow" + spaces + "  => " + code.name + extra, path]
 
@@ -205,16 +219,19 @@ class Dirfuzz
 
       if (code.redirect?)    # Check if we got a redirect
         if @options[:redir] == 0
+          # Follow redirect
           host['dirs'] << redir_do(get.headers['Location'], output)
         end
       elsif (code.found_something?)    # Check if we found something and print output
         next if code.ignore? @options[:redir]
+
         clear_line()
         print_output(output[0], output[1])
 
         # Save the results for processing later
         host['dirs'] << [path, code.name, extra]
       end
+
     end  # end thread block
   end
 
