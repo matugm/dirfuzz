@@ -73,6 +73,19 @@ class Dirfuzz
     end
   end
 
+  def start_crawler(html)
+    level = @options[:links].to_i
+    print_output("%blue","\n[+] Links: ")
+    print "Crawling..." if level == 1
+    crawler = Crawler.new(@baseurl, html)
+    crawler.run(level)
+    clear_line()
+    out = crawler.print_links @ofile
+
+    print_output("%blue","\n[+] Dirs: ")
+    puts
+  end
+
   def run
     beginning = Time.now
 
@@ -137,17 +150,7 @@ class Dirfuzz
 
     # Crawl site if the user requested it
     if @options[:links]
-
-      level = @options[:links].to_i
-      print_output("%blue","\n[+] Links: ")
-      print "Crawling..." if level == 1
-      crawler = Crawler.new(@baseurl,html)
-      crawler.run(level)
-      clear_line()
-      out = crawler.print_links @ofile
-
-      print_output("%blue","\n[+] Dirs: ")
-      puts
+      start_crawler(html)
     end
 
     if $stdout.isatty  and !@options[:multi]
