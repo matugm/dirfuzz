@@ -46,7 +46,7 @@ if ARGV[0] == nil
   puts banner + "Please use -h for help."
   exit()
 else
-  @env[:baseurl] = get_base_url(ARGV[0])
+  @env[:baseurl] = Util::get_base_url(ARGV[0])
 end
 
 @options = {}

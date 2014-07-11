@@ -11,9 +11,14 @@ module Util
     print RESET if $stdout.isatty
   end
 
+  def remove_trailing_slash(base)
+    # Check if it ends in a slash and if so remove it
+    (base[-1] == "/")? base.chop : base
+  end
+
   def get_base_url(url)
     base = ARGV[0].sub("http://","")
-    base.chop! if @env[:baseurl][-1] == "/"
+    remove_trailing_slash(base)
   end
 
   class Code
