@@ -167,7 +167,7 @@ end
 
 # End of option parsing
 
-file = File.new('data/fdirs.txt','r')  # Load dictionary file
+file = File.new('data/fdirs.txt', 'r')  # Load dictionary file
 @env[:dirs] = file.readlines
 file.close
 
