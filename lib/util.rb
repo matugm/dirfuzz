@@ -17,7 +17,7 @@ module Util
   end
 
   def get_base_url(url)
-    base = ARGV[0].sub("http://","")
+    base = url.sub("http://", "")
     remove_trailing_slash(base)
   end
 

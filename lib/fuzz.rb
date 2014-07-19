@@ -1,7 +1,7 @@
 
 class Dirfuzz
 
-  def initialize(options,env)
+  def initialize(options, env)
     @options = options
     @dirs  = env[:dirs]
     @ofile = env[:ofile]
@@ -9,17 +9,12 @@ class Dirfuzz
     @threads = env[:thread_queue]
   end
 
-  def redir_do(location,output)
-
-    if location.start_with? "http://"
-      relative = false
-    else
-      relative = true
-    end
-
-    orig_loc = location.sub("http://","")
-    location = location.gsub(" ","")
+  def normalize_location_header(location)
+    location = location.gsub(" ", "")
     location = location.split("/")
+  end
+
+  def parse_absolute_location(location)
     host = location[2]
 
     if location[3] == nil
@@ -28,16 +23,39 @@ class Dirfuzz
       lpath = "/" + location[3]
     end
 
-    if relative
-      host = @baseurl
-      if location[1] == nil
-        lpath = @options[:path] + location[0]
-      else
-        lpath = "/" + location[1]
-      end
+    [host, lpath]
+  end
+
+  def parse_relative_location(location)
+    host = @baseurl
+
+    if location[1] == nil
+      lpath = @options[:path] + location[0]
+    else
+      lpath = "/" + location[1]
     end
 
-    fredirect = Http.get(host,@ip,lpath,"")  # Send request to find out more about the redirect...
+    [host, lpath]
+  end
+
+  # The location header can come in two forms
+  # an absolute URL or a relative one
+  def get_host_and_path(location)
+    split_location = normalize_location_header(location)
+
+    if location.start_with? "http://"
+      parse_absolute_location(split_location)
+    else
+      parse_relative_location(split_location)
+    end
+  end
+
+  def redir_do(location, output)
+    orig_loc   = location.sub("http://", "")
+    host, path = get_host_and_path(location)
+
+    # Follow redirect
+    fredirect = Http.get(host, @ip, path, "")
 
     clear_line() unless @options[:multi]
     print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
