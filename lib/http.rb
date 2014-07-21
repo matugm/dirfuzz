@@ -211,8 +211,8 @@ class Response
 
     raw_headers.each do |header|    # Parse headers into a hash
       temp  = header.split(/:/, 2)
-      temp[0] = temp[0].sub("\n","")
-      headers["#{temp[0]}"] = temp[1].lstrip
+      name  = temp[0].sub("\n", "").capitalize
+      headers[name] = temp[1].lstrip
     end
 
     return headers

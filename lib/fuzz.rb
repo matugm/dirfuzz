@@ -155,7 +155,6 @@ class Dirfuzz
     if (code.redirect?)    # Check if we got a redirect
       if @options[:redir] == 0
         # Follow redirect
-        binding.pry
         redir_do(get.headers['Location'], output)
       end
     elsif (code.found_something?)    # Check if we found something and print output
