@@ -110,13 +110,15 @@ class Dirfuzz
     ssl_redirect_msg = "Sorry couldn't retrieve links - Main page redirected to SSL site, try port 443."
 
     if (get.code == 301 or get.code == 302)
-      if get.headers['Location'].include? "https://"
+      location = get.headers['Location']
+
+      if location.include? "https://"
         puts ssl_redirect_msg if @options[:links]
         @options[:links] = false
-      elsif get.headers['Location'].include? "http://"
-        get = Http.open(get.headers['Location'])
+      elsif location.include? "http://"
+        get = Http.open(location)
       else
-        get = Http.open(@baseurl + get.headers['Location'])
+        get = Http.open(@baseurl + location)
       end
     end
 
