@@ -209,6 +209,44 @@ class Dirfuzz
     [title, server]
   end
 
+  def send_request(url)
+    req = url.chomp
+    # Add together the start path, the dir/file to test and the extension
+    path = @options[:path] + req + @options[:ext]
+
+    # HTTP request
+    start_time = Time.now
+    begin
+      get = Http.get(@baseurl,@ip,path,@options[:headers])  if @options[:get] == true  # get request (default)
+      get = Http.head(@baseurl,@ip,path,@options[:headers]) if @options[:get] == false # head request
+    rescue Exception => e
+      unless e.is_a? Timeout::Error
+        #puts "Failed http request for host #{@baseurl} path #{path} with error #{e.class}"
+      end
+    end
+    end_time = Time.now - start_time
+
+    # Make sure we got a valid response
+    return false unless get.body
+
+    # Parse HTTP response code
+    code = Code.new(get)
+
+    # Remove trailing space and ending slash if there is one
+    path.chomp!
+    path.chop! if path =~ /\/$/
+
+    # Prepare extra info, like response length.
+    extra  = get_output_data(get, code, path)
+    spaces = get_spaces(req)
+
+    output = ["%yellow" + spaces + "  => " + code.name + extra, path]
+    # Update progress
+    @progress_bar.update
+
+    results = process_results(path, code, extra, get, output)
+  end
+
   def run
     beginning = Time.now
 
@@ -219,59 +257,22 @@ class Dirfuzz
     host['title'], host['server'] = initial_request
 
     if $stdout.isatty && !@options[:multi]
-      progress_bar = Progress.new  # Setup our progress bar
+      @progress_bar = Progress.new  # Setup our progress bar
     end
 
     if @options[:multi]
-      progress_bar = ProgressMulti.new(@baseurl)
+      @progress_bar = ProgressMulti.new(@baseurl)
     end
 
     threads  = @options[:threads].to_i
     thread_queue  = WorkQueue.new(threads, threads) # Setup thread queue
 
     @dirs.each do |url|  # Iterate over our dictionary of words for fuzzing
-
       thread_queue.enqueue_b(url) do |url|   # Start thread block
-
-      req = url.chomp
-      # Add together the start path, the dir/file to test and the extension
-      path = @options[:path] + req + @options[:ext]
-
-      # HTTP request
-      start_time = Time.now
-      begin
-        get = Http.get(@baseurl,@ip,path,@options[:headers])  if @options[:get] == true  # get request (default)
-        get = Http.head(@baseurl,@ip,path,@options[:headers]) if @options[:get] == false # head request
-      rescue Exception => e
-        unless e.is_a? Timeout::Error
-          #puts "Failed http request for host #{@baseurl} path #{path} with error #{e.class}"
-        end
+        results = send_request(url)
+        host['dirs'] << results if results
       end
-      end_time = Time.now - start_time
-
-      # Make sure we got a valid response
-      next unless get.body
-
-      # Parse HTTP response code
-      code = Code.new(get)
-
-      # Remove trailing space and ending slash if there is one
-      path.chomp!
-      path.chop! if path =~ /\/$/
-
-      # Prepare extra info, like response length.
-      extra  = get_output_data(get, code, path)
-      spaces = get_spaces(req)
-
-      output = ["%yellow" + spaces + "  => " + code.name + extra, path]
-      # Update progress
-      progress_bar.update
-
-      results = process_results(path, code, extra, get, output)
-      host['dirs'] << results if results
-
-    end  # end thread block
-  end
+    end
 
     thread_queue.join  # wait for threads to end
     thread_queue.kill
