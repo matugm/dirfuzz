@@ -111,7 +111,8 @@ class Dirfuzz
 
     if (get.code == 301 or get.code == 302)
       if get.headers['Location'].include? "https://"
-        p ssl_redirect_msg if @options[:links]
+        puts ssl_redirect_msg if @options[:links]
+        @options[:links] = false
       elsif get.headers['Location'].include? "http://"
         get = Http.open(get.headers['Location'])
       else
@@ -154,6 +155,7 @@ class Dirfuzz
     if (code.redirect?)    # Check if we got a redirect
       if @options[:redir] == 0
         # Follow redirect
+        binding.pry
         redir_do(get.headers['Location'], output)
       end
     elsif (code.found_something?)    # Check if we found something and print output
@@ -167,17 +169,9 @@ class Dirfuzz
     end
   end
 
-  def run
-    beginning = Time.now
-
-    host = {}
-    host['url'] = @baseurl
-    host['dirs'] = []
-
-    #puts "\e[H\e[2J" if $stdout.isatty  # Clear the screen
-
+  def initial_request
     @ip = Http.resolv(@baseurl) # Resolve name or just return the ip
-    print_output("%green %yellow","[+] Starting fuzz for:",@baseurl)
+    print_output("%green %yellow","[+] Starting fuzz for:", @baseurl)
     puts "[ multi-scan ] Starting for: #{@baseurl}" if @options[:multi]
 
     begin
@@ -190,17 +184,17 @@ class Dirfuzz
       return
     end
 
-    host['server'] = get.headers['Server']
-    print_output("%green %yellow","[+] Server:","#{host['server']}")
+    server = get.headers['Server']
+    print_output("%green %yellow","[+] Server:","#{server}")
 
     get = check_redirect(get)
     html = Nokogiri::HTML.parse(get.body)
 
     print_generator(html)
-    host['title'] = get_title(html)
+    title = get_title(html)
 
     if @options[:info_mode]
-      print_output("%green %yellow","[+] Title:","#{host['title']}\n\n")
+      print_output("%green %yellow","[+] Title:","#{title}\n\n")
       return host
     end
 
@@ -210,6 +204,18 @@ class Dirfuzz
     if @options[:links]
       start_crawler(html)
     end
+
+    [title, server]
+  end
+
+  def run
+    beginning = Time.now
+
+    host = {}
+    host['url']  = @baseurl
+    host['dirs'] = []
+
+    host['title'], host['server'] = initial_request
 
     if $stdout.isatty && !@options[:multi]
       progress_bar = Progress.new  # Setup our progress bar
@@ -261,7 +267,7 @@ class Dirfuzz
       progress_bar.update
 
       results = process_results(path, code, extra, get, output)
-      host['dirs'] << results unless results.empty?
+      host['dirs'] << results if results
 
     end  # end thread block
   end
