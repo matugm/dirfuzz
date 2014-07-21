@@ -95,8 +95,10 @@ class Dirfuzz
     level = @options[:links].to_i
     print_output("%blue","\n[+] Links: ")
     print "Crawling..." if level == 1
+
     crawler = Crawler.new(@baseurl, html)
     crawler.run(level)
+
     clear_line()
     out = crawler.print_links @ofile
 
@@ -105,9 +107,11 @@ class Dirfuzz
   end
 
   def check_redirect(get)
+    ssl_redirect_msg = "Sorry couldn't retrieve links - Main page redirected to SSL site, try port 443."
+
     if (get.code == 301 or get.code == 302)
       if get.headers['Location'].include? "https://"
-        puts "Sorry couldn't retrieve links - Main page redirected to SSL site, you may want to try setting the port to 443." if @options[:links]
+        p ssl_redirect_msg if @options[:links]
       elsif get.headers['Location'].include? "http://"
         get = Http.open(get.headers['Location'])
       else
@@ -223,7 +227,8 @@ class Dirfuzz
       thread_queue.enqueue_b(url) do |url|   # Start thread block
 
       req = url.chomp
-      path = @options[:path] + req + @options[:ext]   # Add together the start path, the dir/file to test and the extension
+      # Add together the start path, the dir/file to test and the extension
+      path = @options[:path] + req + @options[:ext]
 
       # HTTP request
       start_time = Time.now
