@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # DirFuzz - Directory discovery of web applications
-# Copyright (C) 2011-2012 Jesus Castello Lupon
+# Copyright (C) 2011-2014 Jesus Castello (matugm)
 # email: matugm@gmail.com
 
 #This tool is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@ require 'lib/util'
 require 'lib/crawl'
 require 'lib/report'
 
-require 'rubygems'
 require 'term/ansicolor'
 require 'work_queue'
 require 'optparse'

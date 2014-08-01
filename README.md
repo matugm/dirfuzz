@@ -32,14 +32,15 @@ While the included wordlist is not optimized for finding files you can still use
 
 
 Requirements
--------
+-----------
 
-Ruby 1.8.7 or 1.9.2
+Ruby 1.9.2+
 
 Gems:
 term-ansicolor
 nokogiri
 work_queue
+json
 
 If you run on windows you will need to turn the colors off or use ansicon (http://adoxa.3eeweb.com/ansicon/index.html)
 
