@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # DirFuzz - Directory discovery of web applications
-# Copyright (C) 2011-2014 Jesus Castello (matugm)
+# Copyright (C) 2011-2015 Jesus Castello (matugm)
 # email: matugm@gmail.com
 
 #This tool is free software; you can redistribute it and/or
