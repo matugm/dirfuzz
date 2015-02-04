@@ -16,9 +16,7 @@ class Progress
     @next_tick += 1
 
     # Show a 1% graphical increase
-    if increase_progress
-      @bar.inc
-    end
+    @bar.inc if increase_progress
   end
 end
 

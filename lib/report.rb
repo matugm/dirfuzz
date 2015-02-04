@@ -4,8 +4,8 @@
 require "erb"
 
 class Report
+	
 	def initialize(report_dir)
-
 		@report_dir = report_dir
 
 		file = File.open("data/report.css", "r") { |file| file.readlines }
@@ -16,7 +16,6 @@ class Report
 
 		file = File.open("data/report.html", "r") { |file| file.readlines }
 		@data_bloc = ERB.new(file.join)
-
 	end
 
 	def generate(data,summary)

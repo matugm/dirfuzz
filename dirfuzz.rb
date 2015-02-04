@@ -151,7 +151,6 @@ else
   @options[:headers] = ""
 end
 
-
 if @options[:nocolors] or !$stdout.isatty
   @options[:nocolors] = 1
 else
@@ -165,7 +164,7 @@ end
 
 @options[:get] = true
 
-# End of option parsing
+### End of option parsing
 
 file = File.new('data/fdirs.txt', 'r')  # Load dictionary file
 @env[:dirs] = file.readlines

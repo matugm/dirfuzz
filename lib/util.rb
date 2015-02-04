@@ -59,20 +59,10 @@ module Util
 
     return if @options[:multi]
 
-    coloring = OutputColor.new(colored_words, @options[:nocolors])
+    output = OutputColor.new(colored_words, @options[:nocolors])
 
-    msg.split.each do |word|
-      case word
-        when "%yellow"
-          msg.sub! "%yellow",coloring.color(:yellow)
-        when "%green"
-          msg.sub! "%green",coloring.color(:green)
-        when "%red"
-          msg.sub! "%red", coloring.color(:red)
-        when "%blue"
-          msg.sub! "%blue", coloring.color(:blue)
-      end
-    end
+    # Subtitute color tags for colored words
+    msg.split.each { |word| msg.sub! word, output.color(word.sub("%", "")) }
 
     puts msg
     @ofile.puts msg.gsub(/\e\[1m\e\[3.m|\[0m|\e/,'') if @options[:file]
