@@ -62,7 +62,7 @@ module Util
     output = OutputColor.new(colored_words, @options[:nocolors])
 
     # Subtitute color tags for colored words
-    msg.split.each { |word| msg.sub! word, output.color(word.sub("%", "")) }
+    msg.gsub!(/%(\w+)/) { |word| output.color($1) }
 
     puts msg
 
