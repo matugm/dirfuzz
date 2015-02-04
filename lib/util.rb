@@ -65,6 +65,8 @@ module Util
     msg.split.each { |word| msg.sub! word, output.color(word.sub("%", "")) }
 
     puts msg
+
+    # Remove colors when writing to a file
     @ofile.puts msg.gsub(/\e\[1m\e\[3.m|\[0m|\e/,'') if @options[:file]
   end
 
