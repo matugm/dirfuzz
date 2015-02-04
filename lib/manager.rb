@@ -43,6 +43,7 @@ class FuzzManager
     puts "Starting multi-scan [ #{@total_host} host ]"
     puts
 
+    start = Time.now
     @options[:host_list].each do |host|
       host_queque.enqueue_b(host, mutex) do |host, mutex|
         fuzz_host(host, mutex)
@@ -53,7 +54,7 @@ class FuzzManager
 
     host_queque.join
 
-    time = "%0.1f" % [Time.now - summary['date']]
+    time = "%0.1f" % [Time.now - start]
     puts "[ multi-scan ] finished after #{time} seconds"
   end
 

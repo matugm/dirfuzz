@@ -41,12 +41,13 @@ class Request
 end
 
 class Http
-# Sets the method to GET and calls request
+  # Sets the method to GET and calls request
   def self.get (host,ip,path,headers)
     method = "get"
     request(host,ip,path,method,headers)
   end
-# Simple method for a quick GET request
+
+  # Parse URL for path and host name, then make a GET request
   def self.open (host)
     method = "get"
     host.sub!("http://",'')
@@ -81,7 +82,7 @@ class Http
     end
   end
 
-# Resolves a name and returns the ip
+  # Resolves a name and returns the ip address
   def self.resolv (host)
     retry_count = 0
 
@@ -127,7 +128,7 @@ class Http
 
     if method == "post"
       buff += "Content-Type: application/x-www-form-urlencoded\r\n"
-      buff += "Content-Length: " + data.length.to_s + "\r\n"
+      buff += "Content-Length: #{data.length.to_s}\r\n"
       buff += "\r\n" + data
     else
       buff += "\r\n"
@@ -152,7 +153,6 @@ class Http
       sc.close
       obj = Response.new(raw_data.join)
     end
-
   end
 
   def self.connection(ip,port)
@@ -181,7 +181,6 @@ end
 class Response
 
   def initialize(raw_data)
-
     if raw_data.empty?
       raise InvalidHttpResponse
     end
