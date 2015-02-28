@@ -596,6 +596,8 @@ berri
 bertha
 beryl
 beta
+better
+__better_errors
 beth
 betsie
 betty
@@ -3112,6 +3114,7 @@ showthread
 shtml
 shuttle
 sierra
+sidekiq
 signature
 signup
 silver

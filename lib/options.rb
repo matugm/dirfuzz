@@ -64,12 +64,12 @@ opts.banner = "DirFuzz 1.6 by matugm\nUsage: #{$0} host[:port] [options]\n"
   end
 
   @options[:threads] = 6
-   opts.on( '-t', '--threads num_threads', 'Set the number of threads (Default: 6)' ) do |num_threads|
+  opts.on( '-t', '--threads num_threads', 'Set the number of threads (Default: 6)' ) do |num_threads|
      @options[:threads] = num_threads
   end
 
   @options[:cookie] = nil
-   opts.on( '-c', '--cookie "cookie"', 'Use a cookie.' ) do |cookie|
+  opts.on( '-c', '--cookie "cookie"', 'Use a cookie.' ) do |cookie|
      @options[:cookie] = cookie
   end
 

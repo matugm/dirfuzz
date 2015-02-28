@@ -128,7 +128,7 @@ class Http
 
     if method == "post"
       buff += "Content-Type: application/x-www-form-urlencoded\r\n"
-      buff += "Content-Length: #{data.length.to_s}\r\n"
+      buff += "Content-Length: #{data.length}\r\n"
       buff += "\r\n" + data
     else
       buff += "\r\n"
@@ -151,7 +151,7 @@ class Http
       end
 
       sc.close
-      obj = Response.new(raw_data.join)
+      Response.new(raw_data.join)
     end
   end
 
@@ -218,11 +218,7 @@ class Response
   end
 
   def get_size(body)
-    if headers["Content-Length"]
-      len = headers["Content-Length"]
-    else
-      len = body.length
-    end
+    headers.fetch("Content-Length", body.length)
   end
 
   def decode_data(body)
@@ -245,11 +241,11 @@ class Response
     end
 
     return data || ""
-   end
+  end
 
   def decode_chunked(body)
     @len = body.length
-    body = body.split(/^[0-9a-fA-F]+\r\n/).join.split(/\r\n/).join
+    body.split(/^[0-9a-fA-F]+\r\n/).join.split(/\r\n/).join
   end
 
   def parse_code(raw_data)

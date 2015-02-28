@@ -49,18 +49,20 @@ class Crawler
   end
 
   def expanded_relative_links
-    host = host.chop if @host[-1] == "/"
+    host.chop if @host[-1] == "/"
     expanded_links = []
+
     @rel_links.each do |link|
-      if html? link
-        if link.start_with? "/"
-          expanded_links << @host + link
-        else
-          expanded_links << @host + "/" + link
-        end
+      next unless html? link
+
+      if link.start_with? "/"
+        expanded_links << @host + link
+      else
+        expanded_links << @host + "/" + link
       end
     end
-    return expanded_links
+
+    expanded_links
   end
 
   def base_dir(link)

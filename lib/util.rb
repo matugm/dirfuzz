@@ -62,7 +62,7 @@ module Util
     output = OutputColor.new(colored_words, @options[:nocolors])
 
     # Subtitute color tags for colored words
-    msg.gsub!(/%(\w+)/) { |word| output.color($1) }
+    msg.gsub!(/%(\w+)/) { output.color($1) }
 
     puts msg
 

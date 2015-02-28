@@ -58,10 +58,10 @@ class Dirfuzz
     fredirect = Http.get(host, @ip, path, "")
 
     clear_line() unless @options[:multi]
-    print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]",output[1])
+    print_output(output[0] + "  [ -> " + orig_loc + " " + fredirect.code.to_s + "]", output[1])
 
     code = output[0].scan(/\d{3} \w+/).first
-    return [output[1], "#{code}  [ -> #{orig_loc} #{fredirect.code.to_s} ]"]
+    return [output[1], "#{code}  [ -> #{orig_loc} #{fredirect.code} ]"]
   end
 
   def repeated_response
@@ -244,7 +244,7 @@ class Dirfuzz
     # Update progress
     @progress_bar.update
 
-    results = process_results(path, code, extra, get, output)
+    process_results(path, code, extra, get, output)
   end
 
   def run
@@ -284,5 +284,5 @@ class Dirfuzz
     host['found'] = host['dirs'].size
     host['time']  = time.to_f
     return host
-    end
+  end
 end
