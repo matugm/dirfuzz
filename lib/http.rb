@@ -64,7 +64,7 @@ class Http
     request(host,ip,path,method,headers,data)
   end
 
-  def self.head (host,ip,path,headers)
+  def self.head (host,ip,path,_)
     method = "head"
     request(host,ip,path,method)
   end

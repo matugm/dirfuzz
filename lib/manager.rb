@@ -19,7 +19,7 @@ class FuzzManager
     rescue DnsFail => e
       puts "[-] Couldn't resolve name: #{@env[:baseurl]}\n\n"
       return
-    rescue Exception => e
+    rescue StandardError => e
       puts "[-] Error -> " + e.message
       puts e.backtrace
     end
