@@ -11,7 +11,7 @@ class Dirfuzz
 
   def normalize_location_header(location)
     location = location.gsub(" ", "")
-    location = location.split("/")
+    location.split("/")
   end
 
   def parse_absolute_location(location)
@@ -100,7 +100,7 @@ class Dirfuzz
     crawler.run(level)
 
     clear_line()
-    out = crawler.print_links @ofile
+    crawler.print_links @ofile
 
     print_output("%blue","\n[+] Dirs: ")
     puts
@@ -147,9 +147,9 @@ class Dirfuzz
 
   def get_spaces(req)
     if req.length < 16
-      spaces = " " * (16 - req.length)
+      " " * (16 - req.length)
     else
-      spaces = " " * 16
+      " " * 16
     end
   end
 
