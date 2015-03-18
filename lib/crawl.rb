@@ -4,9 +4,9 @@ require 'nokogiri'
 
 class Crawler
 
-  def parse (html)
-    html = Nokogiri::HTML.parse(html) unless html.kind_of? Nokogiri::HTML::Document
-    a_tags = html.xpath("//a[@href]")
+  def parse(html)
+    html = Nokogiri::HTML.parse(html) unless html.is_a? Nokogiri::HTML::Document
+    a_tags = html.xpath('//a[@href]')
    #form_tags = html.xpath("//form[@action]")  # Parsing of form tags, not implemented yet.
     links = []
     a_tags.each { |a| links << a[:href]  } # Extract the href attribute.
@@ -15,7 +15,7 @@ class Crawler
     return links
   end
 
-  def initialize(host,html)
+  def initialize(host, html)
     @host = host + ""
 
     @links = parse html
@@ -49,16 +49,16 @@ class Crawler
   end
 
   def expanded_relative_links
-    host.chop if @host[-1] == "/"
+    host.chop if @host[-1] == '/'
     expanded_links = []
 
     @rel_links.each do |link|
       next unless html? link
 
-      if link.start_with? "/"
+      if link.start_with? '/'
         expanded_links << @host + link
       else
-        expanded_links << @host + "/" + link
+        expanded_links << @host + '/' + link
       end
     end
 
@@ -73,7 +73,7 @@ class Crawler
   def split_links(links)
     links.each do |link|
       link = urldecode(link)
-      link.sub!(/#.*/,'')
+      link.sub!(/#.*/, '')
       if (link.index %r[http(s)?://#{@host}]) == 0
         @abs_links << link
       elsif (link.index %r[http(s)?://]) == 0
@@ -89,15 +89,14 @@ class Crawler
     end
   end
 
-  def html? (link)
-    return true if link.start_with? "/" and link.scan(/\.[\w]{1,5}$/) == []
+  def html?(link)
+    return true if link.start_with? '/' && link.scan(/\.[\w]{1,5}$/) == []
     web_extensions = %w[ htm html asp aspx jsp php py pl do ]
     web_extensions.each do |extension|
-      return true if (link.end_with? '.' + extension or link.end_with? '/')
+      return true if link.end_with?('.' + extension) || link.end_with?('/')
     end
     return false
   end
-
 
   def crawl(to_crawl)
     crawled_links = []
@@ -105,11 +104,11 @@ class Crawler
       html = Http.open(link)
       crawled_links += parse html.body
     end
-    return crawled_links
+    crawled_links
   end
 
   def normalize
-    @abs_links.map { |link| link.sub('http://','') }
+    @abs_links.map { |link| link.sub('http://', '') }
   end
 
   def puts_file(string)
@@ -131,18 +130,18 @@ class Crawler
 
   def formated_links(type)
     case type
-    when "external"
+    when 'external'
       @ext_links = @ext_links.sort.uniq
-    when "absolute"
+    when 'absolute'
       @abs_links.sort.uniq { |link| link[/.*\?(?:\w+=)(?=\d+)|[\w\/.-]+/] }
-    when "relative"
+    when 'relative'
       @rel_links = @rel_links.sort.uniq { |link| link[/.*\/?(?:[\w_-]+)/] }
       @rel_links.map { |e| e.gsub(/^\/[\w_-]+\/\w+/) { |link| " " * 4 + link  } }
-    when "mail"
+    when 'mail'
       @mail_links = @mail_links.find_all { |m| m =~ /@/ }  # Avoid incorrectly formated mailto links
       @mail_links = @mail_links.sort_by { |s| [ s[/@.*/], s[/.*@/] ] }
       @mail_links.uniq.map { |m| m.sub('mailto:','') }
-    when "robots"
+    when 'robots'
       Http.open(@host + '/robots.txt').body.scan(/Disallow: (.*)/).sort.uniq
     end
   end
@@ -153,11 +152,11 @@ class Crawler
     final_links = @abs_links + expanded_relative_links()
     final_links = final_links.sort.uniq { |link| link[/.*\?\w+/] } # Conseguir links con parametros unicos
 
-    print_link "[External links]",  formated_links('external')
-    print_link "[Absolute links]",  formated_links('absolute')
-    print_link "[Relative links]",  formated_links('relative')
-    print_link "[E-mail accounts]", formated_links('mail')
-    print_link "[Robots.txt]",      formated_links('robots')
-    print_link "[Links with parameters]", final_links.grep(/\?/)
+    print_link '[External links]',  formated_links('external')
+    print_link '[Absolute links]',  formated_links('absolute')
+    print_link '[Relative links]',  formated_links('relative')
+    print_link '[E-mail accounts]', formated_links('mail')
+    print_link '[Robots.txt]',      formated_links('robots')
+    print_link '[Links with parameters]', final_links.grep(/\?/)
   end
 end

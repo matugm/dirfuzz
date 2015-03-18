@@ -17,9 +17,9 @@ class Request
     @agentset = 0
 
     case method
-      when "get"  then @buff = "GET "
-      when "post" then @buff = "POST "
-      else @buff = "HEAD "
+    when "get"  then @buff = "GET "
+    when "post" then @buff = "POST "
+    else @buff = "HEAD "
     end
 
     @buff += "#{path} HTTP/1.1\r\n"
@@ -28,7 +28,7 @@ class Request
     @buff += "Accept-Encoding: gzip;q=1.0, deflate;q=0.6, identity;q=0.3\r\n"
   end
 
-  def user_agent= (agent)
+  def user_agent=(agent)
     @buff += agent unless @agentset
   end
 
@@ -42,30 +42,30 @@ end
 
 class Http
   # Sets the method to GET and calls request
-  def self.get (host,ip,path,headers)
-    method = "get"
+  def self.get(host,ip,path,headers)
+    method = 'get'
     request(host,ip,path,method,headers)
   end
 
   # Parse URL for path and host name, then make a GET request
-  def self.open (host)
-    method = "get"
-    host.sub!("http://",'')
-    host, path = host.split("/",2)
-    path = "" if path == nil
-    path = "/" + path
+  def self.open(host)
+    method = 'get'
+    host.sub!('http://', '')
+    host, path = host.split("/", 2)
+    path = '' if path == nil
+    path = '/' + path
 
     ip = resolv(host)
     request(host,ip,path,method)
   end
 
   def self.post (host,ip,path,headers,data)
-    method = "post"
+    method = 'post'
     request(host,ip,path,method,headers,data)
   end
 
   def self.head (host,ip,path,_)
-    method = "head"
+    method = 'head'
     request(host,ip,path,method)
   end
 
@@ -78,7 +78,7 @@ class Http
 
     if (ip == nxredir)
       puts "\n[-] Warning: Inexistent domain, you are most likely being redirected by your dns server."
-      sleep (2)
+      sleep(2)
     end
   end
 
@@ -94,19 +94,17 @@ class Http
         ip   = Resolv.getaddress(host)
         return ip
       end
-    rescue Resolv::ResolvError => e
+    rescue Resolv::ResolvError
       raise DnsFail
-    rescue Timeout::Error => e
-      if retry_count < 3
-        retry
-      end
+    rescue Timeout::Error
+      retry if retry_count < 3
       raise DnsTimeout
     end
   end
 
 # Check if the url ends with a colon and splits it, so we can use
 # the supplied port, otherwise sets the port to 80
-  def self.port_split (host)
+  def self.port_split(host)
     host, port = host.split(/:/)
     port ||= 80
     return host,port
@@ -137,7 +135,7 @@ class Http
     send_request(ip, port, buff)
   end
 
-  def self.send_request (ip, port, buff)
+  def self.send_request(ip, port, buff)
     # TO DO: Add proxy support
     timeout 10 do     # Throws an exception Timeout::Error if we can't connect in 5 seconds
       sc = connection(ip, port)
@@ -157,7 +155,7 @@ class Http
 
   def self.connection(ip,port)
     socket = TCPSocket.open(ip, port)
-    if port == "443"
+    if port == '443'
       context    = OpenSSL::SSL::SSLContext.new
       ssl_client = OpenSSL::SSL::SSLSocket.new socket, context
       ssl_client.connect
@@ -198,7 +196,7 @@ class Response
     raw_headers = raw_headers.split("\r")
     raw_headers.delete_at(0)
 
-    if body.nil? or !raw_data.start_with? "HTTP"
+    if body.nil? || !raw_data.start_with?('HTTP')
       raise InvalidHttpResponse
     end
 

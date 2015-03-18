@@ -16,7 +16,7 @@ class FuzzManager
     rescue InvalidHttpResponse
       puts "Server responded with an invalid http packet, skipping..."
       return
-    rescue DnsFail => e
+    rescue DnsFail
       puts "[-] Couldn't resolve name: #{@env[:baseurl]}\n\n"
       return
     rescue StandardError => e
@@ -61,7 +61,7 @@ class FuzzManager
   def fuzz_single
     host    = @options[:host_list].first
     threads = @options[:threads].to_i
-    @env[:thread_queue] = WorkQueue.new(threads,threads*2)
+    @env[:thread_queue] = WorkQueue.new(threads, threads*2)
 
     fuzz_host(host)
   end

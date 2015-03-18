@@ -1,7 +1,7 @@
 
 class Progress
   def initialize
-    @bar = ProgressBar.new("Fuzzing", 100, out=$stdout)
+    @bar = ProgressBar.new('Fuzzing', 100, $stdout)
     @total_progress = 0
     @next_tick = 0
     @tty = $stdout.isatty
@@ -30,10 +30,7 @@ class ProgressMulti < Progress
 
   def update
     @next_tick += 1
-
-    if increase_progress
-      output_percent_update
-    end
+    output_percent_update if increase_progress
   end
 
   def output_percent_update

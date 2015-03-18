@@ -64,19 +64,21 @@ class Dirfuzz
     return [output[1], "#{code}  [ -> #{orig_loc} #{fredirect.code} ]"]
   end
 
-  def repeated_response
-    if host['dirs'].any? and code.name == host['dirs'].last[1]
-      unless code.code == 200 and extra != host['dirs'].last[2]
-        repeated += 1
-        if repeated >= 6
-          @options[:redir] = "" if @options[:redir].instance_of? Fixnum
-          @options[:redir] << code.code.to_s
-          puts "Too many #{code.code} reponses in a row, ignoring...\n\n" unless @options[:multi]
-        end
+  def repeated_response(code)
+    if host['dirs'].any? && code.name == host['dirs'].last[1]
+      unless code.code == 200 && extra != host['dirs'].last[2]
+        @repeated_count += 1
+        ignore_repeated_response(code) if @repeated_count >= 6
       end
     else
-      repeated = 0
+      @repeated_count = 0
     end
+  end
+
+  def ignore_repeated_response(code)
+    @options[:redir] = "" if @options[:redir].instance_of? Fixnum
+    @options[:redir] << code.code.to_s
+    puts "Too many #{code.code} reponses in a row, ignoring...\n\n" unless @options[:multi]
   end
 
   def get_output_data(get, code, path)
@@ -93,7 +95,7 @@ class Dirfuzz
 
   def start_crawler(html)
     level = @options[:links].to_i
-    print_output("%blue","\n[+] Links: ")
+    print_output("%blue", "\n[+] Links: ")
     print "Crawling..." if level == 1
 
     crawler = Crawler.new(@baseurl, html)
@@ -109,7 +111,7 @@ class Dirfuzz
   def check_redirect(get)
     ssl_redirect_msg = "Sorry couldn't retrieve links - Main page redirected to SSL site, try port 443."
 
-    if (get.code == 301 or get.code == 302)
+    if (get.code == 301 || get.code == 302)
       location = get.headers['Location']
 
       if location.include? "https://"
@@ -131,7 +133,7 @@ class Dirfuzz
     meta.each { |m| generator = m[:content] if m[:name] == "generator" }
 
     if generator
-      print_output("%green %yellow","[%] Meta-Generator: ","#{generator}\n\n")
+      print_output("%green %yellow", "[%] Meta-Generator: ", "#{generator}\n\n")
     end
   end
 

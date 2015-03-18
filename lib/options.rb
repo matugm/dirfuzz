@@ -1,7 +1,7 @@
 
 optparse = OptionParser.new do |opts|
 
-opts.banner = "DirFuzz 1.6 by matugm\nUsage: #{$0} host[:port] [options]\n"
+  opts.banner = "DirFuzz 1.6 by matugm\nUsage: #{$0} host[:port] [options]\n"
 
   @options[:host_list] = Array(@env[:baseurl])
   opts.on('-r', '--read file', 'Read hosts to scan from a file.') do |file|
@@ -31,8 +31,7 @@ opts.banner = "DirFuzz 1.6 by matugm\nUsage: #{$0} host[:port] [options]\n"
   @options[:path] = "/"
   opts.on( '-p', '--path path', 'Start path (Default: /)' ) do |path|
     unless path.start_with? "/"
-      puts "[-] The path must start with a /"
-      exit -1
+      abort "[-] The path must start with a /"
     end
     @options[:path] = path
     @options[:path] += "/"
@@ -58,8 +57,7 @@ opts.banner = "DirFuzz 1.6 by matugm\nUsage: #{$0} host[:port] [options]\n"
     if not level.scan(/[01]/).empty?
       @options[:links] = level
     else
-      puts "You must suply the number 0 or 1 with the links option."
-      exit -1
+      abort "You must suply the number 0 or 1 with the links option."
     end
   end
 
@@ -99,7 +97,7 @@ else
   @options[:headers] = ""
 end
 
-if @options[:nocolors] or !$stdout.isatty
+if @options[:nocolors] || !$stdout.isatty
   @options[:nocolors] = 1
 else
   @options[:nocolors] = 0

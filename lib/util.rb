@@ -13,7 +13,7 @@ module Util
 
   def remove_trailing_slash(base)
     # Check if it ends in a slash and if so remove it
-    (base[-1] == "/")? base.chop : base
+    (base[-1] == "/") ? base.chop : base
   end
 
   def get_base_url(url)
@@ -28,7 +28,7 @@ module Util
     end
 
     def redirect?
-      @code == 301 or @code == 302
+      @code == 301 || @code == 302
     end
 
     def found_something?
@@ -43,7 +43,7 @@ module Util
       @code == 403
     end
 
-    def ignore? (ignore_code)
+    def ignore?(ignore_code)
       return false if ignore_code.instance_of? Fixnum
       ignore_code.scan(/\d+/).include? @code.to_s
     end
@@ -55,7 +55,7 @@ module Util
     attr_reader :code
   end
 
-  def print_output (msg, *colored_words)
+  def print_output(msg, *colored_words)
 
     return if @options[:multi]
 
@@ -67,20 +67,15 @@ module Util
     puts msg
 
     # Remove colors when writing to a file
-    @ofile.puts msg.gsub(/\e\[1m\e\[3.m|\[0m|\e/,'') if @options[:file]
+    @ofile.puts msg.gsub(/\e\[1m\e\[3.m|\[0m|\e/, '') if @options[:file]
   end
 
   def urldecode(input)
-    decoded = input + ""
-    input.scan(/%[0-9a-f]{2}/i) do |h|
-      ascii = h.split('%')[1].hex.chr
-      decoded.gsub!(h,ascii)
-    end
-    return decoded
+    input.gsub(/%([0-9a-fA-Z]{2})/i) { $1.hex.chr }
   end
 
   class OutputColor
-    def initialize(words,coloring)
+    def initialize(words, coloring)
       @index = 0
       @words = words
       @coloring = coloring

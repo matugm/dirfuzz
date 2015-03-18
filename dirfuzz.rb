@@ -44,13 +44,13 @@ end
 
 @options[:get] = true
 
-banner = "DirFuzz 1.6 by matugm\nUsage: #{$0} host[:port] [options]\n"
+banner = "DirFuzz 1.6 by matugm\nUsage: #{$PROGRAM_NAME} host[:port] [options]\n"
 
 if ARGV[0] == nil
   puts banner + "Please use -h for help."
   exit
 else
-  @env[:baseurl] = Util::get_base_url(ARGV[0])
+  @env[:baseurl] = get_base_url(ARGV[0])
 end
 
 require 'lib/options'
@@ -63,7 +63,7 @@ file.close
 
 trap("INT") do   # Capture Ctrl-C
   @options[:file] = nil
-  print_output("%red","\n[-] Stoped by user request...")
+  print_output("%red", "\n[-] Stoped by user request...")
   exit! 1
 end
 
@@ -86,7 +86,7 @@ summary['finished'] = "%0.1f" % [summary['finished']]
 
 if @options[:info_mode]
   report = Report.new(report_dir)
-  File.open(report_dir + "/report.html","w") { |file| file.puts report.generate(data,summary) }
+  File.open(report_dir + "/report.html","w") { |file| file.puts report.generate(data, summary) }
 
   puts
   puts "Report generated in #{report_dir}/report.html"
